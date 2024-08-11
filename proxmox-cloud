@@ -1,24 +1,19 @@
 
 resource "proxmox_vm_qemu" "cloud-k3s-master" {
-   
     target_node = "homelab"
     desc = "Cloud Ubuntu 22.04"
     count = 1
     onboot = true
 
-   
     clone = "ubuntu-cloud"
-
-   
     agent = 0
 
     os_type = "cloud-init"
     cores = 2
-    sockets = 2
-    numa = true
+    sockets = 1
     vcpus = 0
     cpu = "host"
-    memory = 5096
+    memory = 8096
     name = "k3s-master-0${count.index + 1}"
 
     scsihw   = "virtio-scsi-single" 
@@ -42,61 +37,54 @@ resource "proxmox_vm_qemu" "cloud-k3s-master" {
         }
     }
 
-    ipconfig0 = "ip=dhcp"
-
-    ciuser = "cloud-user"
-    sshkeys = <<EOF
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDQqkUZNSvcny0xeFkAH8FmKuy5GxduUs3tTttOuo5xzWdiqASOH512i2lP0Jm+v9lqvV4ePtPWpPRLPdb/6Xt4VYJLC7LZtUPADkkxwpIuNnUQ5piyQ9P36xF/iMZFw5ORhg6pnUbckorbb5MGawt5LjCEAx8N+quv1GEyjANsVNJR1qmBZOwPcRwfO7CIcQa9SAuzGj2UWi8miuSLEmIDdVuaf/bHEkSo+cR/0VYQhqLpy1Hh/K5MqNxw8QMVo4E5T5FLKa2KT90XMmO4+gn4Xn7wjkcchDi7MQZsD+LEEaAMoVyX+GOfztflUFk/JvrHIHa7mD+Fgu/FL/ukcm8jTRrNVx8ixQmKhJlP43xwkegZGk1OQ7S1hZeXNMuBCf68m3PROyaHH6JxGCdWSmLF1Kk0wWHSfllQkifULvoOICtvGtdqTObki54LlTZChLMuFgNvWDMdlFyUeVJcyF15B9ck1n8tK44pZNuc83d55JD9gnDenz4PNmrTmBYeftaXZyPjASflASDHdoUa0M8kWpNYDT2kpgU6/miVl7oqfZhUu5h8ucwcUh+bGherAozaZcQ3GEe0Ceq5LWvfKNp/7Mr/keVClzfwLtRU0XRusEDlFKzELGcnidlZvxljBfC71l7vBejrYXLIiEeNuyz6LwbwXvU5MHrl3pvVKolZDQ== root@homelab
-    EOF
-}
-
-resource "proxmox_vm_qemu" "cloud-k3s-worker" {
-    
-    target_node = "homelab"
-    desc = "Cloud Ubuntu 22.04"
-    count = 2
-    onboot = true
-
-    
-    clone = "ubuntu-cloud"
-
-    agent = 0
-
-    os_type = "cloud-init"
-    cores = 2
-    sockets = 2
-    numa = true
-    vcpus = 0
-    cpu = "host"
-    memory = 5096
-    name = "k3s-worker-0${count.index + 1}"
-
-
-    scsihw   = "virtio-scsi-single" 
-    bootdisk = "scsi0"
-    disks {
-        scsi {
-            scsi0 {
-                disk {
-                  storage = "local-lvm"
-                  emulatessd = true
-                  size = 150
-                }
-            }
-        }
-        ide {
-            ide3 {
-                cloudinit {
-                  storage = "local-lvm"
-                }
-            }
-        }
+    network {
+        model = "virtio"
+        bridge = "vmbr0"
     }
-
-    ipconfig0 = "ip=dhcp"
-    
-    ciuser = "cloud-user"
-    sshkeys = <<EOF
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDQqkUZNSvcny0xeFkAH8FmKuy5GxduUs3tTttOuo5xzWdiqASOH512i2lP0Jm+v9lqvV4ePtPWpPRLPdb/6Xt4VYJLC7LZtUPADkkxwpIuNnUQ5piyQ9P36xF/iMZFw5ORhg6pnUbckorbb5MGawt5LjCEAx8N+quv1GEyjANsVNJR1qmBZOwPcRwfO7CIcQa9SAuzGj2UWi8miuSLEmIDdVuaf/bHEkSo+cR/0VYQhqLpy1Hh/K5MqNxw8QMVo4E5T5FLKa2KT90XMmO4+gn4Xn7wjkcchDi7MQZsD+LEEaAMoVyX+GOfztflUFk/JvrHIHa7mD+Fgu/FL/ukcm8jTRrNVx8ixQmKhJlP43xwkegZGk1OQ7S1hZeXNMuBCf68m3PROyaHH6JxGCdWSmLF1Kk0wWHSfllQkifULvoOICtvGtdqTObki54LlTZChLMuFgNvWDMdlFyUeVJcyF15B9ck1n8tK44pZNuc83d55JD9gnDenz4PNmrTmBYeftaXZyPjASflASDHdoUa0M8kWpNYDT2kpgU6/miVl7oqfZhUu5h8ucwcUh+bGherAozaZcQ3GEe0Ceq5LWvfKNp/7Mr/keVClzfwLtRU0XRusEDlFKzELGcnidlZvxljBfC71l7vBejrYXLIiEeNuyz6LwbwXvU5MHrl3pvVKolZDQ== root@homelab
-    EOF
+    ipconfig0 = "ip=10.0.0.10/24,gw=10.0.0.1"
 }
+
+# resource "proxmox_vm_qemu" "cloud-k3s-worker" {
+#     target_node = "homelab"
+#     desc = "Cloud Ubuntu 22.04"
+#     count = 2
+#     onboot = true
+
+#     clone = "ubuntu-cloud"
+#     agent = 0
+
+#     os_type = "cloud-init"
+#     cores = 2
+#     sockets = 1
+#     vcpus = 0
+#     cpu = "host"
+#     memory = 5096
+#     name = "k3s-worker-0${count.index + 1}"
+
+#     scsihw   = "virtio-scsi-single" 
+#     bootdisk = "scsi0"
+#     disks {
+#         scsi {
+#             scsi0 {
+#                 disk {
+#                   storage = "local-lvm"
+#                   emulatessd = true
+#                   size = 150
+#                 }
+#             }
+#         }
+#         ide {
+#             ide3 {
+#                 cloudinit {
+#                   storage = "local-lvm"
+#                 }
+#             }
+#         }
+#     }
+
+#     network {
+#         model = "virtio"
+#         bridge = "vmbr0"
+#     }
+#     ipconfig0 = "ip=10.0.0.2${count.index + 1}/24,gw=10.0.0.1"
+# }
