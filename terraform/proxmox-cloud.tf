@@ -1,4 +1,3 @@
-
 resource "proxmox_vm_qemu" "cloud-k3s-master" {
     target_node = "homelab"
     desc = "Cloud Ubuntu 22.04"
