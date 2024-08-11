@@ -1,0 +1,146 @@
+---
+- name: K3s Install with Metallb and Rancher
+  hosts: all
+  become: yes
+  become_user: root
+  vars:
+    metallb_ippool: 10.0.0.150-10.0.0.199
+    cert_manager_version: v1.15.2
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+  tasks:
+    - name: Install K3s
+      shell: curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644 --disable servicelb
+      register: k3s_install
+
+    - name: Display K3s installation output
+      debug:
+        var: k3s_install.stdout_lines
+
+    - name: Install Metallb
+      shell: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
+
+    - name: Check Metallb deployment status
+      shell: kubectl rollout status deployment -n metallb-system
+      register: metallb_deployment_status
+
+    - name: Display Metallb deployment output
+      debug:
+        var: metallb_deployment_status.stdout_lines
+
+    - name: Create IPAddressPool file for Metallb
+      copy:
+        content: |
+          apiVersion: metallb.io/v1beta1
+          kind: IPAddressPool
+          metadata:
+            name: first-pool
+            namespace: metallb-system
+          spec:
+            addresses:
+            - {{ metallb_ippool }}
+        dest: /tmp/ipaddresses.yml
+
+    - name: Apply IPAddressPool file for Metallb
+      shell: kubectl apply -f /tmp/ipaddresses.yml
+    
+    - name: Create L2Advertisement file for Metallb
+      copy:
+        content: |
+          apiVersion: metallb.io/v1beta1
+          kind: L2Advertisement
+          metadata:
+            name: first-pool
+            namespace: metallb-system
+        dest: /tmp/layer2.yml
+
+    - name: Apply L2Advertisement file for Metallb
+      shell: kubectl apply -f /tmp/layer2.yml
+    
+    - name: Install Helm
+      shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+      register: helm_install
+      
+    - name: Display Helm installation output
+      debug:
+        var: helm_install.stdout_lines
+
+    - name: Creating .kube directory
+      ansible.builtin.file:
+        path: /root/.kube/
+        state: directory
+        mode: '0644'
+    
+    - name: Coping k3s.yaml into .kube directory
+      copy:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: /root/.kube/config
+        remote_src: yes
+
+    - name: Change permission for /.kube/config for read-only 
+      ansible.builtin.file:
+        path: /root/.kube/config
+        mode: '400' 
+
+    - name: Add Helm repositories for Rancher and Cert-manager
+      shell: |
+        helm repo add rancher-alpha https://releases.rancher.com/server-charts/alpha
+        helm repo add jetstack https://charts.jetstack.io
+        helm repo update
+      register: helm_repos_add
+      
+    - name: Display Helm repositories output
+      debug:
+        var: helm_repos_add.stdout_lines
+  
+    - name: Apply jeststack manifest for cert-manager deployment
+      shell: kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/{{ cert_manager_version }}/cert-manager.crds.yaml
+    
+    - name: Create namespace for cert-manager
+      shell: kubectl create namespace cert-manager
+      register: cert_manager_namespace
+      ignore_errors: true
+
+    - name: Check cert-manager namespace status
+      debug:
+        var: cert_manager_namespace
+
+    - name: Install cert-manager using Helm
+      shell: helm install cert-manager jetstack/cert-manager --namespace cert-manager --version {{ cert_manager_version }}
+      register: cert_manager_install_helm
+      when: cert_manager_namespace.rc == 0 
+
+    # - name: debug-cert-manager
+    #   debug:
+    #     var: cert_manager_install_helm
+
+    - name: Check cert-manager deployment status
+      shell: kubectl rollout status deployment -n cert-manager 
+      register: cert_manager_deployment_status
+
+    - name: Display cert-manager Helm deployment output
+      debug:
+        var: cert_manager_deployment_status.stdout_lines
+
+    - name: Create namespace for Rancher
+      shell: kubectl create namespace cattle-system
+      register: rancher_namespace
+      ignore_errors: true
+
+    - name: Check Rancher namespace status
+      debug:
+        var: rancher_namespace
+
+    - name: Install Rancher using Helm
+      shell: helm install rancher rancher-alpha/rancher --devel --namespace cattle-system --set hostname=rancher.homelab.local --set bootstrapPassword=admin 
+      register: rancher_install_helm
+      # when: rancher_namespace.rc == 0 
+
+    - name: Check Rancher deployment status
+      shell: kubectl rollout status deployment/rancher -n cattle-system 
+      register: rancher_deployment_status
+     
+    - name: Display Rancher deployment status output
+      debug:
+        var: rancher_deployment_status.stdout_lines
+        
