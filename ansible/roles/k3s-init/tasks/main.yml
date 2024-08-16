@@ -1,52 +1,56 @@
 ---
+# TODO check kubernetes.core modules applicability
 - name: Install K3s
-  shell: curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644 --disable servicelb
-  register: k3s_install
+  block:
+    - name: Install K3s | Download install script
+      ansible.builtin.get_url:
+        url: https://get.k3s.io
+        dest: "{{ path.k3s_install }}"
+        mode: '0755'
 
-- name: Display K3s installation output
-  debug:
-    var: k3s_install.stdout_lines
+    - name: Install K3s | Run install script
+      ansible.builtin.command: "sh {{ path.k3s_install }} --write-kubeconfig-mode 644 --disable servicelb"
+      args:
+        creates: "{{ path.k3s_bin }}"
+
+    - name: Install K3s | Verify installation
+      ansible.builtin.command: k3s --version
+      register: k3s_ver
+
+    - name: Install K3s | Output version
+      tags: debug
+      ansible.builtin.debug:
+        msg: "Successfully installed version: {{ k3s_ver.stdout }}"
 
 - name: Install Metallb
-  shell: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
+  ansible.builtin.command: |
+    "kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb.version }}/config/manifests/metallb-native.yaml"
 
 - name: Check Metallb deployment status
-  shell: kubectl rollout status deployment -n metallb-system
+  ansible.builtin.command: kubectl rollout status deployment -n metallb-system
   register: metallb_deployment_status
 
 - name: Display Metallb deployment output
-  debug:
+  ansible.builtin.debug:
     var: metallb_deployment_status.stdout_lines
 
 - name: Create IPAddressPool file for Metallb
-  copy:
-    content: |
-      apiVersion: metallb.io/v1beta1
-      kind: IPAddressPool
-      metadata:
-        name: first-pool
-        namespace: metallb-system
-      spec:
-        addresses:
-        - {{ metallb_ippool }}
-    dest: /tmp/ipaddresses.yml
+  ansible.builtin.template:
+    src: ipaddresses.yml.j2
+    dest: "{{ path.metallb_ipaddresses }}"
 
 - name: Apply IPAddressPool file for Metallb
-  shell: kubectl apply -f /tmp/ipaddresses.yml
+  ansible.builtin.command: "kubectl apply -f {{ path.metallb_ipaddresses }}"
 
 - name: Create L2Advertisement file for Metallb
-  copy:
-    content: |
-      apiVersion: metallb.io/v1beta1
-      kind: L2Advertisement
-      metadata:
-        name: first-pool
-        namespace: metallb-system
-    dest: /tmp/layer2.yml
+  ansible.builtin.template:
+    src: layer2.yml.j2
+    dest: "{{ path.metallb_layer2 }}"
 
 - name: Apply L2Advertisement file for Metallb
-  shell: kubectl apply -f /tmp/layer2.yml
+  shell: "kubectl apply -f {{ path.metallb_layer2 }}"
 
+# TODO rewrite Helm
 - name: Install Helm
   shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
   register: helm_install
