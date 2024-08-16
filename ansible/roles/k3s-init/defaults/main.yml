@@ -3,18 +3,32 @@
 
 # filepaths
 path:
-  k3s_install: /tmp/k3s_install.sh
-  k3s_bin: /usr/local/bin/k3s
-  metallb_ipaddresses: /tmp/ipaddresses.yml
-  metallb_layer2: /tmp/layer2.yml
+  k3s:
+    install: /tmp/k3s_install.sh
+    bin: /usr/local/bin/k3s
+    conf_src: /etc/rancher/k3s/k3s.yaml
+  metallb:
+    ipaddresses: /tmp/ipaddresses.yml
+    layer2: /tmp/layer2.yml
+  kube_dir: /root/.kube/
+
+# namespaces
+namespace:
+  metallb: metallb-system
+  cert: cert-manager
+  rancher: cattle-system
 
 # Metallb variables
 metallb:
   version: v0.14.8
   ippool: 10.0.0.150-10.0.0.199
-  meta:
-    name: first-pool
-    namespace: metallb-system
+  pool_name: first-pool
 
-# Cert Manager version
-cert_manager_version: v1.15.2
+# Cert Manager variables
+cert_manager:
+  version: v1.15.2
+
+# Rancher variables
+rancher:
+  hostname: rancher.homelab.local
+  bootstrapPassword: admin
