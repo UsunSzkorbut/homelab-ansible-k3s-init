@@ -33,6 +33,7 @@
   register: metallb_deployment_status
 
 - name: Display Metallb deployment output
+  tags: debug
   ansible.builtin.debug:
     var: metallb_deployment_status.stdout_lines
 
@@ -153,5 +154,6 @@
       register: rancher_deployment_status
   
     - name: Display Rancher deployment status output
+      tags: debug
       ansible.builtin.debug:
         var: rancher_deployment_status.stdout_lines
