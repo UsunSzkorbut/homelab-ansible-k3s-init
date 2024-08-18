@@ -1,135 +1,145 @@
 ---
+# TODO check kubernetes.core modules applicability
+# TODO urls as variables
 - name: Install K3s
-  shell: curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644 --disable servicelb
-  register: k3s_install
+  block:
+    - name: Install K3s | Download install script
+      ansible.builtin.get_url:
+        url: https://get.k3s.io
+        dest: "{{ path.k3s.install }}"
+        mode: '0755'
 
-- name: Display K3s installation output
-  debug:
-    var: k3s_install.stdout_lines
+    - name: Install K3s | Run install script
+      ansible.builtin.shell: "{{ path.k3s.install }} --write-kubeconfig-mode 644 --disable servicelb"
+      args:
+        creates: "{{ path.k3s.bin }}"
+
+    - name: Install K3s | Verify installation
+      ansible.builtin.command: k3s --version
+      register: k3s_ver
+
+    - name: Install K3s | Output version
+      tags: debug
+      ansible.builtin.debug:
+        msg: "Successfully installed version: {{ k3s_ver.stdout }}"
 
 - name: Install Metallb
-  shell: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
+  ansible.builtin.shell: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb.version }}/config/manifests/metallb-native.yaml
 
 - name: Check Metallb deployment status
-  shell: kubectl rollout status deployment -n metallb-system
+  ansible.builtin.command: "kubectl rollout status deployment -n {{ namespace.metallb }}"
   register: metallb_deployment_status
 
 - name: Display Metallb deployment output
-  debug:
+  tags: debug
+  ansible.builtin.debug:
     var: metallb_deployment_status.stdout_lines
 
 - name: Create IPAddressPool file for Metallb
-  copy:
-    content: |
-      apiVersion: metallb.io/v1beta1
-      kind: IPAddressPool
-      metadata:
-        name: first-pool
-        namespace: metallb-system
-      spec:
-        addresses:
-        - {{ metallb_ippool }}
-    dest: /tmp/ipaddresses.yml
+  ansible.builtin.template:
+    src: ipaddresses.yml.j2
+    dest: "{{ path.metallb.ipaddresses }}"
 
 - name: Apply IPAddressPool file for Metallb
-  shell: kubectl apply -f /tmp/ipaddresses.yml
+  ansible.builtin.command: "kubectl apply -f {{ path.metallb.ipaddresses }}"
 
 - name: Create L2Advertisement file for Metallb
-  copy:
-    content: |
-      apiVersion: metallb.io/v1beta1
-      kind: L2Advertisement
-      metadata:
-        name: first-pool
-        namespace: metallb-system
-    dest: /tmp/layer2.yml
+  ansible.builtin.template:
+    src: layer2.yml.j2
+    dest: "{{ path.metallb.layer2 }}"
 
 - name: Apply L2Advertisement file for Metallb
-  shell: kubectl apply -f /tmp/layer2.yml
+  ansible.builtin.shell: kubectl apply -f {{ path.metallb.layer2 }}
 
 - name: Install Helm
-  shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-  register: helm_install
+  block:
+    - name: Install Helm | Execute install script
+      ansible.builtin.shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+      register: helm_install
   
-- name: Display Helm installation output
-  debug:
-    var: helm_install.stdout_lines
+    - name: Install Helm | Display Helm installation output
+      tags: debug
+      ansible.builtin.debug:
+        var: helm_install.stdout_lines
 
 - name: Creating .kube directory
   ansible.builtin.file:
-    path: /root/.kube/
+    path: "{{ path.kube_dir }}"
     state: directory
     mode: '0644'
 
 - name: Coping k3s.yaml into .kube directory
-  copy:
-    src: /etc/rancher/k3s/k3s.yaml
-    dest: /root/.kube/config
+  ansible.builtin.copy:
+    src: "{{ path.k3s.conf_src }}"
     remote_src: yes
+    dest: "{{ path.kube_dir }}/config"
+    mode: '0400'
 
-- name: Change permission for /.kube/config for read-only 
-  ansible.builtin.file:
-    path: /root/.kube/config
-    mode: '400' 
+- name: Add Helm repositories
+  block:
+    - name: Add Helm repositories | For Rancher
+      ansible.builtin.shell: helm repo add rancher-alpha https://releases.rancher.com/server-charts/alpha
 
-- name: Add Helm repositories for Rancher and Cert-manager
-  shell: |
-    helm repo add rancher-alpha https://releases.rancher.com/server-charts/alpha
-    helm repo add jetstack https://charts.jetstack.io
-    helm repo update
-  register: helm_repos_add
+    - name: Add Helm repositories | For Cert-manager
+      ansible.builtin.shell: helm repo add jetstack https://charts.jetstack.io
+  notify: "helm repo update"
   
 - name: Display Helm repositories output
-  debug:
-    var: helm_repos_add.stdout_lines
+  tags: debug
+  ansible.builtin.debug:
+    var: helm_repos_up.stdout_lines
 
-- name: Apply jeststack manifest for cert-manager deployment
-  shell: kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/{{ cert_manager_version }}/cert-manager.crds.yaml
+- name: Apply jetstack manifest for cert-manager deployment
+  ansible.builtin.shell: kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/{{ cert_manager.version }}/cert-manager.crds.yaml
 
 - name: Create namespace for cert-manager
-  shell: kubectl create namespace cert-manager
-  register: cert_manager_namespace
-  ignore_errors: true
+  block:
+    - name: Create namespace for cert-manager
+      ansible.builtin.shell: kubectl create namespace {{ namespace.cert }}
+      register: cert_manager_namespace
 
-- name: Check cert-manager namespace status
-  debug:
-    var: cert_manager_namespace
+    - name: Create namespace for cert-manager | Check cert-manager namespace status
+      tags: debug
+      ansible.builtin.debug:
+        var: cert_manager_namespace
 
 - name: Install cert-manager using Helm
-  shell: helm install cert-manager jetstack/cert-manager --namespace cert-manager --version {{ cert_manager_version }}
+  ansible.builtin.shell: helm install cert-manager jetstack/cert-manager --namespace {{ namespace.cert }} --version {{ cert_manager.version }}
   register: cert_manager_install_helm
-  when: cert_manager_namespace.rc == 0 
-
-# - name: debug-cert-manager
-#   debug:
-#     var: cert_manager_install_helm
 
 - name: Check cert-manager deployment status
-  shell: kubectl rollout status deployment -n cert-manager 
-  register: cert_manager_deployment_status
+  block:
+    - name: Check cert-manager deployment status
+      ansible.builtin.shell: kubectl rollout status deployment -n {{ namespace.cert }}
+      register: cert_manager_deployment_status
 
-- name: Display cert-manager Helm deployment output
-  debug:
-    var: cert_manager_deployment_status.stdout_lines
+    - name: Display cert-manager Helm deployment output
+      tags: debug
+      ansible.builtin.debug:
+        var: cert_manager_deployment_status.stdout_lines
 
 - name: Create namespace for Rancher
-  shell: kubectl create namespace cattle-system
-  register: rancher_namespace
-  ignore_errors: true
+  block:
+    - name: Create namespace for Rancher
+      ansible.builtin.shell: kubectl create namespace {{ namespace.rancher }}
+      register: rancher_namespace
 
-- name: Check Rancher namespace status
-  debug:
-    var: rancher_namespace
+    - name: Check Rancher namespace status
+      tags: debug
+      ansible.builtin.debug:
+        var: rancher_namespace
 
 - name: Install Rancher using Helm
-  shell: helm install rancher rancher-alpha/rancher --devel --namespace cattle-system --set hostname=rancher.homelab.local --set bootstrapPassword=admin 
+  ansible.builtin.shell: helm install rancher rancher-alpha/rancher --devel --namespace {{ namespace.rancher }} --set hostname={{ rancher.hostname }} --set bootstrapPassword={{ rancher.bootstrapPassword }}
   register: rancher_install_helm
-  # when: rancher_namespace.rc == 0 
 
 - name: Check Rancher deployment status
-  shell: kubectl rollout status deployment/rancher -n cattle-system 
-  register: rancher_deployment_status
+  block:
+    - name: Check Rancher deployment status
+      ansible.builtin.shell: kubectl rollout status deployment/rancher -n {{ namespace.rancher }}
+      register: rancher_deployment_status
   
-- name: Display Rancher deployment status output
-  debug:
-    var: rancher_deployment_status.stdout_lines
+    - name: Display Rancher deployment status output
+      tags: debug
+      ansible.builtin.debug:
+        var: rancher_deployment_status.stdout_lines
