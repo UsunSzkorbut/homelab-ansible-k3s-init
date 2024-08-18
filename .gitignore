@@ -2,3 +2,6 @@
 .terraform/
 .terraform.lock.hcl
 terraform.tfstate
+
+#ignore ansible ppk file
+/ansible/proxmox-k3s-vc
