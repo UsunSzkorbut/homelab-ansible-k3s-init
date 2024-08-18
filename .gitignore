@@ -1,7 +1,7 @@
 #ignore terraform init files
 .terraform/
 .terraform.lock.hcl
-terraform.tfstate
+terraform.tfstate*
 
 #ignore ansible ppk file
 /ansible/proxmox-k3s-vc
