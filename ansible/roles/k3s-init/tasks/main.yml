@@ -24,9 +24,7 @@
         msg: "Successfully installed version: {{ k3s_ver.stdout }}"
 
 - name: Install Metallb
-  ansible.builtin.shell: >
-    "kubectl apply
-     -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb.version }}/config/manifests/metallb-native.yaml"
+  ansible.builtin.shell: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb.version }}/config/manifests/metallb-native.yaml
 
 - name: Check Metallb deployment status
   ansible.builtin.command: "kubectl rollout status deployment -n {{ namespace.metallb }}"
@@ -51,7 +49,7 @@
     dest: "{{ path.metallb.layer2 }}"
 
 - name: Apply L2Advertisement file for Metallb
-  shell: "kubectl apply -f {{ path.metallb.layer2 }}"
+  ansible.builtin.shell: kubectl apply -f {{ path.metallb.layer2 }}
 
 - name: Install Helm
   block:
@@ -92,16 +90,13 @@
     var: helm_repos_up.stdout_lines
 
 - name: Apply jetstack manifest for cert-manager deployment
-  ansible.builtin.shell: >
-    "kubectl apply --validate=false
-     -f https://github.com/jetstack/cert-manager/releases/download/{{ cert_manager.version }}/cert-manager.crds.yaml"
+  ansible.builtin.shell: kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/{{ cert_manager.version }}/cert-manager.crds.yaml
 
 - name: Create namespace for cert-manager
   block:
     - name: Create namespace for cert-manager
-      ansible.builtin.shell: "kubectl create namespace {{ namespace.cert }}"
+      ansible.builtin.shell: kubectl create namespace {{ namespace.cert }}
       register: cert_manager_namespace
-      ignore_errors: true
 
     - name: Create namespace for cert-manager | Check cert-manager namespace status
       tags: debug
@@ -109,16 +104,13 @@
         var: cert_manager_namespace
 
 - name: Install cert-manager using Helm
-  ansible.builtin.shell: >
-    "helm install cert-manager jetstack/cert-manager
-     --namespace {{ namespace.cert }}
-     --version {{ cert_manager.version }}"
+  ansible.builtin.shell: helm install cert-manager jetstack/cert-manager --namespace {{ namespace.cert }} --version {{ cert_manager.version }}
   register: cert_manager_install_helm
 
 - name: Check cert-manager deployment status
   block:
     - name: Check cert-manager deployment status
-      ansible.builtin.shell: "kubectl rollout status deployment -n {{ namespace.cert }}"
+      ansible.builtin.shell: kubectl rollout status deployment -n {{ namespace.cert }}
       register: cert_manager_deployment_status
 
     - name: Display cert-manager Helm deployment output
@@ -129,9 +121,8 @@
 - name: Create namespace for Rancher
   block:
     - name: Create namespace for Rancher
-      ansible.builtin.shell: "kubectl create namespace {{ namespace.rancher }}"
+      ansible.builtin.shell: kubectl create namespace {{ namespace.rancher }}
       register: rancher_namespace
-      ignore_errors: true
 
     - name: Check Rancher namespace status
       tags: debug
@@ -139,12 +130,7 @@
         var: rancher_namespace
 
 - name: Install Rancher using Helm
-  ansible.builtin.shell: >
-    "helm install rancher rancher-alpha/rancher
-     --devel
-     --namespace {{ namespace.rancher }}
-     --set hostname={{ rancher.hostname }}
-     --set bootstrapPassword={{ rancher.bootstrapPassword }}"
+  ansible.builtin.shell: helm install rancher rancher-alpha/rancher --devel --namespace {{ namespace.rancher }} --set hostname={{ rancher.hostname }} --set bootstrapPassword={{ rancher.bootstrapPassword }}
   register: rancher_install_helm
 
 - name: Check Rancher deployment status

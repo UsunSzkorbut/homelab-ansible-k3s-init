@@ -1,6 +1,6 @@
 ---
 - name: K3s Install with Metallb and Rancher
-  hosts: k3s
+  hosts: k3s-master-01
   become: true
   vars:
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
