@@ -2,6 +2,7 @@
 
 K3s cluster init with pre-installed components as:
  - Metallb
+ - Helm support
  - Cert-Manager
  - RancherOrchiestrator
 
