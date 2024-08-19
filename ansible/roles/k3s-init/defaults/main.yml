@@ -8,15 +8,22 @@ path:
     bin: /usr/local/bin/k3s
     conf_src: /etc/rancher/k3s/k3s.yaml
   metallb:
+    manifest: /tmp/metallb-native.yaml
     ipaddresses: /tmp/ipaddresses.yml
     layer2: /tmp/layer2.yml
   kube_dir: /root/.kube/
+  cert:
+    creds: /tmp/cert-manager.crds.yaml
 
 # namespaces
-namespace:
+cluster_ns:
   metallb: metallb-system
   cert: cert-manager
   rancher: cattle-system
+
+# K3s variables
+k3s:
+  version: v1.28.12+k3s1
 
 # Metallb variables
 metallb:

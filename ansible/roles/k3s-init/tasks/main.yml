@@ -1,6 +1,4 @@
 ---
-# TODO check kubernetes.core modules applicability
-# TODO urls as variables
 - name: Install pre-requisites
   block:
     - name: Install pre-requisites | Python3-pip
@@ -27,7 +25,7 @@
         mode: '0755'
 
     - name: Install K3s | Run install script
-      ansible.builtin.shell: "INSTALL_K3S_VERSION=v1.28.12+k3s1 {{ path.k3s.install }} --write-kubeconfig-mode 644 --disable servicelb"
+      ansible.builtin.shell: "INSTALL_K3S_VERSION={{ k3s.version }} {{ path.k3s.install }} --write-kubeconfig-mode 644 --disable servicelb"
       args:
         creates: "{{ path.k3s.bin }}"
 
@@ -60,19 +58,19 @@
     - name: Metallb | Download manifest to the cluster
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/metallb/metallb/{{ metallb.version }}/config/manifests/metallb-native.yaml
-        dest: ~/metallb-native.yaml
+        dest: "{{ path.metallb.manifest }}"
         mode: '0664'
 
     - name: Metallb | Apply manifest to the cluster
       kubernetes.core.k8s:
         state: present
-        src: ~/metallb-native.yaml
+        src: "{{ path.metallb.manifest }}"
 
     - name: Metallb | Wait till the deployment is ready
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
-        namespace: metallb-system
+        namespace: "{{ cluster_ns.metallb }}"
         wait_sleep: 10
         wait_timeout: 360
       register: metallb_deployment_status
@@ -125,7 +123,7 @@
     - name: Cert-manager | Download CustomResourceDefinitions manifest
       ansible.builtin.get_url:
         url: https://github.com/jetstack/cert-manager/releases/download/{{ cert_manager.version }}/cert-manager.crds.yaml
-        dest: ~/cert-manager.crds.yaml
+        dest: "{{ path.cert.creds }}"
         mode: '0664'
 
     - name: Cert-manager | Apply CustomResourceDefinitions manifest to the cluster
@@ -138,7 +136,7 @@
         name: cert-manager
         chart_ref: jetstack/cert-manager
         chart_version: "{{ cert_manager.version }}"
-        release_namespace: "{{ namespace.cert }}"
+        release_namespace: "{{ cluster_ns.cert }}"
         create_namespace: true
       register: cert_manager_install_helm
 
@@ -146,7 +144,7 @@
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
-        namespace: "{{ namespace.cert }}"
+        namespace: "{{ cluster_ns.cert }}"
         wait_sleep: 10
         wait_timeout: 360
       register: cert_manager_deployment_status
@@ -157,7 +155,7 @@
       kubernetes.core.helm:
         name: rancher
         chart_ref: rancher-latest/rancher
-        release_namespace: "{{ namespace.rancher }}"
+        release_namespace: "{{ cluster_ns.rancher }}"
         create_namespace: true
         state: present
         wait: true
@@ -172,7 +170,7 @@
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
-        namespace: "{{ namespace.rancher }}"
+        namespace: "{{ cluster_ns.rancher }}"
         wait_sleep: 10
         wait_timeout: 360
       register: rancher_deployment_status
