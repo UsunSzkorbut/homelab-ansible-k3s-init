@@ -1,2 +1,8 @@
 ---
-# handlers file for k3s-init
+# handlers file for k3s-server
+
+- name: Remove temporary files
+  ansible.builtin.file:
+    path: "{{ tmp_dir }}"
+    state: absent
+  listen: "remove_tmp"
