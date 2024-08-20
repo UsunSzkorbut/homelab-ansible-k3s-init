@@ -1,8 +1,24 @@
 ---
-- name: K3s Install with Metallb and Rancher
-  hosts: k3s-master-01
+- name: K3s Server Install
+  hosts: server
   become: true
   vars:
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
   roles:
-    - k3s-init
+    - k3s-server
+
+- name: K3s Agents Install
+  hosts: agents
+  become: true
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  roles:
+    - k3s-agents
+
+- name: K3s Components Install
+  hosts: server
+  become: true
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  roles:
+    - k3s-components

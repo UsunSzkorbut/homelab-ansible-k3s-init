@@ -8,7 +8,7 @@ K3s cluster init with pre-installed components as:
 
 ## TODO:
 - [ ] Install Longhorn on the server
-- [ ] Provide support for installation on multiple VMs
+- [X] Provide support for installation on multiple VMs
 - [ ] Implement error handling during the installation process
 
 ## Environment specification
@@ -37,6 +37,13 @@ qm set 5000 --serial0 socket --vga serial0
 | Proxmox    |     8      |
 | Ansible    |     Core 2.16.10       |
 | Terraform  |     v1.9.4       |
+
+## Cluster Network Topology
+| Role       | IP              |
+|:----------:|:---------------:|
+| server     |     10.0.0.10   |
+| agent      |     10.0.0.21   |
+| agent      |     10.0.0.22   |
 
 ### Installation
 
@@ -73,4 +80,6 @@ chmod 0400 ./ansible/[your-key]
 ```
 
 ## More information
-- [k3s-init role](./ansible/roles/k3s-init/README.md)
+- [k3s-server role](./ansible/roles/k3s-server/README.md)
+- [k3s-agents role](./ansible/roles/k3s-agents/README.md)
+- [k3s-components role](./ansible/roles/k3s-components/README.md)

@@ -1,43 +1,4 @@
 ---
-- name: Install pre-requisites
-  block:
-    - name: Install pre-requisites | Python3-pip
-      ansible.builtin.apt:
-        name: python3-pip
-      register: pip_install_result
-      until: pip_install_result is succeeded
-      retries: 5
-      delay: 15
-
-    - name: Install pre-requisites | Python3-REQ
-      ansible.builtin.pip:
-        name:
-          - pyyaml
-          - kubernetes
-          - jsonpatch
-
-- name: Install K3s
-  block:
-    - name: Install K3s | Download install script
-      ansible.builtin.get_url:
-        url: https://get.k3s.io
-        dest: "{{ path.k3s.install }}"
-        mode: '0755'
-
-    - name: Install K3s | Run install script
-      ansible.builtin.shell: "INSTALL_K3S_VERSION={{ k3s.version }} {{ path.k3s.install }} --write-kubeconfig-mode 644 --disable servicelb"
-      args:
-        creates: "{{ path.k3s.bin }}"
-
-    - name: Install K3s | Verify installation
-      ansible.builtin.command: k3s --version
-      register: k3s_ver
-
-    - name: Install K3s | Output version
-      tags: debug
-      ansible.builtin.debug:
-        msg: "Successfully installed version: {{ k3s_ver.stdout }}"
-
 - name: Kube.conf
   block:
     - name: Kube.conf | Creating .kube directory
@@ -129,7 +90,7 @@
     - name: Cert-manager | Apply CustomResourceDefinitions manifest to the cluster
       kubernetes.core.k8s:
         state: present
-        src: ~/cert-manager.crds.yaml
+        src: "{{ path.cert.creds }}"
 
     - name: Cert-manager | Install using Helm
       kubernetes.core.helm:

@@ -1,0 +1,12 @@
+---
+# defaults file for k3s-server
+# filepaths
+path:
+  k3s:
+    install: /tmp/k3s_install.sh
+    bin: /usr/local/bin/k3s
+  
+# K3s variables
+k3s:
+  version: v1.28.12+k3s1
+

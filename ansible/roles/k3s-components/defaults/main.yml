@@ -1,11 +1,9 @@
 ---
-# defaults file for k3s-init
+# defaults file for k3s-components
 
 # filepaths
 path:
   k3s:
-    install: /tmp/k3s_install.sh
-    bin: /usr/local/bin/k3s
     conf_src: /etc/rancher/k3s/k3s.yaml
   metallb:
     manifest: /tmp/metallb-native.yaml
@@ -20,10 +18,6 @@ cluster_ns:
   metallb: metallb-system
   cert: cert-manager
   rancher: cattle-system
-
-# K3s variables
-k3s:
-  version: v1.28.12+k3s1
 
 # Metallb variables
 metallb:
