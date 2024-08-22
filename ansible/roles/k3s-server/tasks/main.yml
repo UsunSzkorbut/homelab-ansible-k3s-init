@@ -60,11 +60,3 @@
       run_once: true
       delegate_to: localhost
       delegate_facts: true
-
-## TODO check if delegation of file lookup works
-#- name: Delegate K3s API token to localhost
-#  ansible.builtin.set_fact:
-#    k3s_token: "{{ lookup('file', '/var/lib/rancher/k3s/server/node-token') }}"
-#  run_once: true
-#  delegate_to: localhost
-#  delegate_facts: true
