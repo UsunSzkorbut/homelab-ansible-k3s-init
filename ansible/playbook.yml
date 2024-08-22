@@ -1,6 +1,6 @@
 ---
-- name: K3s Server Install
-  hosts: server
+- name: K3s Server and Agents Install
+  hosts: all
   become: true
   vars:
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
@@ -8,15 +8,7 @@
     ansible.builtin.setup:
       gather_timeout: 60
   roles:
-    - k3s-server
-
-- name: K3s Agents Install
-  hosts: agents
-  become: true
-  vars:
-    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-  roles:
-    - k3s-agents
+    - k3s-init
 
 - name: K3s Components Install
   hosts: server
