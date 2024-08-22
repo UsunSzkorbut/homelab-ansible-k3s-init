@@ -80,10 +80,9 @@ chmod 0400 ./ansible/[your-key]
 ```
 
 ## For Vagrant deployment:
-- [Vagrant support](./vagrant/Vagrantfile)
+- [Vagrant support](./vagrant/README.md)
 
-
-## More information
+## More information:
 - [k3s-server role](./ansible/roles/k3s-server/README.md)
 - [k3s-agents role](./ansible/roles/k3s-agents/README.md)
 - [k3s-components role](./ansible/roles/k3s-components/README.md)
