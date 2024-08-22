@@ -5,3 +5,6 @@ terraform.tfstate*
 
 #ignore ansible ppk file
 /ansible/proxmox-k3s-vc
+
+#ignore vagrant configuration files
+.vagrant/
