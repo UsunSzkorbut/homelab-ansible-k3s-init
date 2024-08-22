@@ -16,8 +16,17 @@
           - kubernetes
           - jsonpatch
     
-    - name: Prepare pre-requisites | Disable UFW firewall
-      ansible.builtin.shell: ufw disable
+    - name: Prepare pre-requisites | Set UFW rules | Allow port 6443/TCP
+      ansible.builtin.command: ufw allow 6443/tcp
+
+    - name: Prepare pre-requisites | Set UFW rules | Allow pods subnetwork
+      ansible.builtin.command: ufw allow from 10.42.0.0/16 to any
+
+    - name: Prepare pre-requisites | Set UFW rules | Allow services subnetwork
+      ansible.builtin.command: ufw allow from 10.43.0.0/16 to any
+
+    - name: Prepare pre-requisites | Set UFW rules | Display rules
+      ansible.builtin.command: ufw status
       
     - name: Prepare pre-requisites | Create temporary directory
       ansible.builtin.file:
