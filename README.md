@@ -83,6 +83,5 @@ chmod 0400 ./ansible/[your-key]
 - [Vagrant support](./vagrant/README.md)
 
 ## More information:
-- [k3s-server role](./ansible/roles/k3s-server/README.md)
-- [k3s-agents role](./ansible/roles/k3s-agents/README.md)
+- [k3s-init role](./ansible/roles/k3s-init/README.md)
 - [k3s-components role](./ansible/roles/k3s-components/README.md)
