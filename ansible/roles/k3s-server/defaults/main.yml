@@ -11,4 +11,4 @@ k3s:
     bin: /usr/local/bin/k3s
     install: "{{ tmp_dir }}/k3s_install.sh"
     node_token: /var/lib/rancher/k3s/server/node-token
-  node_token: "{{ lookup('file', /var/lib/rancher/k3s/server/node-token) }}"
+#  node_token: lookup('file', '/var/lib/rancher/k3s/server/node-token')

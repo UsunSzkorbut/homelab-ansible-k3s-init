@@ -48,23 +48,23 @@
         msg: "Successfully installed version: {{ k3s_ver.stdout }}"
   notify: "remove_tmp"
         
-#- name: Delegate K3s API token
-#  block:
-#    - name: Delegate K3s API token | Save file output to register
-#      ansible.builtin.shell: cat {{ k3s.path.node_token }} | tr -d " \t\n\r"
-#      register: k3s_token_reg
-#
-#    - name: Delegate K3s API token | Delegate output to localhost
-#      ansible.builtin.set_fact:
-#        k3s_token: "{{ k3s_token_reg.stdout }}"
-#      run_once: true
-#      delegate_to: localhost
-#      delegate_facts: true
+- name: Delegate K3s API token
+  block:
+    - name: Delegate K3s API token | Save file output to register
+      ansible.builtin.shell: cat {{ k3s.path.node_token }} | tr -d " \t\n\r"
+      register: k3s_token_reg
 
-# TODO check if delegation of file lookup works
-- name: Delegate K3s API token to localhost
-  ansible.builtin.set_fact:
-    k3s_token: "{{ k3s.node_token }}"
-  run_once: true
-  delegate_to: localhost
-  delegate_facts: true
+    - name: Delegate K3s API token | Delegate output to localhost
+      ansible.builtin.set_fact:
+        k3s_token: "{{ k3s_token_reg.stdout }}"
+      run_once: true
+      delegate_to: localhost
+      delegate_facts: true
+
+## TODO check if delegation of file lookup works
+#- name: Delegate K3s API token to localhost
+#  ansible.builtin.set_fact:
+#    k3s_token: "{{ lookup('file', '/var/lib/rancher/k3s/server/node-token') }}"
+#  run_once: true
+#  delegate_to: localhost
+#  delegate_facts: true
