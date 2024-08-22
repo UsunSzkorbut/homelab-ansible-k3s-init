@@ -1,8 +1,8 @@
 ---
-# defaults file for k3s-agents
+# defaults file for k3s-init
 
 # temporary directory (marked for removal)
-tmp_dir: /tmp/k3s-agents
+tmp_dir: /tmp/k3s-init
   
 # K3s variables
 k3s:
@@ -10,3 +10,4 @@ k3s:
   path:
     bin: /usr/local/bin/k3s
     install: "{{ tmp_dir }}/k3s_install.sh"
+    node_token: /var/lib/rancher/k3s/server/node-token
