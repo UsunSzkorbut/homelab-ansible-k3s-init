@@ -27,3 +27,6 @@ To successfully run this setup, ensure that your environment meets the following
 vagrant up
 vagrant destroy -f
 ```
+
+### ⚠️ IMPORTANT NOTE ⚠️
+The default login and password for all VMs is `vagrant:vagrant`. You will need to change the ansible `inventory.yml` file to get everything working, replacing fields accordingly.

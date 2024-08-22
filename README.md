@@ -79,6 +79,10 @@ Depending on the operating system of the deploy server, there may be a problem w
 chmod 0400 ./ansible/[your-key]
 ```
 
+## For Vagrant deployment:
+- [Vagrant support](./vagrant/Vagrantfile)
+
+
 ## More information
 - [k3s-server role](./ansible/roles/k3s-server/README.md)
 - [k3s-agents role](./ansible/roles/k3s-agents/README.md)
