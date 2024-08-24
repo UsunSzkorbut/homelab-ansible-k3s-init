@@ -21,7 +21,8 @@
         path: "{{ tmp_dir }}"
         state: directory
         mode: '0755'
-        
+
+# TODO may require more robust error handling for 'inventory_hostname' fields
 - name: Install K3s
   block:
     - name: Install K3s | Download install script
@@ -30,10 +31,31 @@
         dest: "{{ k3s.path.install }}"
         mode: '0755'
 
-    - name: Install K3s | Run install script
+    - name: Install K3s | Run install script on server
       ansible.builtin.shell: INSTALL_K3S_VERSION={{ k3s.version }} K3S_KUBECONFIG_MODE="644" INSTALL_K3S_EXEC="--disable servicelb" {{ k3s.path.install }}
       args:
         creates: "{{ k3s.path.bin }}"
+      when: inventory_hostname in groups['server']
+        
+    - name: Delegate K3s API token
+      block:
+        - name: Delegate K3s API token | Save file output to register
+          ansible.builtin.shell: cat {{ k3s.path.node_token }} | tr -d " \t\n\r"
+          register: k3s_token_reg
+    
+        - name: Delegate K3s API token | Delegate output to localhost
+          ansible.builtin.set_fact:
+            k3s_token: "{{ k3s_token_reg.stdout }}"
+          run_once: true
+          delegate_to: localhost
+          delegate_facts: true
+      when: inventory_hostname in groups['server']
+      
+    - name: Install K3s | Run install script
+      ansible.builtin.shell: INSTALL_K3S_VERSION={{ k3s.version }} K3S_KUBECONFIG_MODE="644" INSTALL_K3S_EXEC="agent" K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_default_ipv4.address }}:6443  K3S_TOKEN={{ hostvars['localhost'].k3s_token }} {{ k3s.path.install }}
+      args:
+        creates: "{{ k3s.path.bin }}"
+      when: inventory_hostname in groups['agents']
 
     - name: Install K3s | Verify installation
       ansible.builtin.command: k3s --version
@@ -45,15 +67,4 @@
         msg: "Successfully installed version: {{ k3s_ver.stdout }}"
   notify: "remove_tmp"
         
-- name: Delegate K3s API token
-  block:
-    - name: Delegate K3s API token | Save file output to register
-      ansible.builtin.shell: cat {{ k3s.path.node_token }} | tr -d " \t\n\r"
-      register: k3s_token_reg
 
-    - name: Delegate K3s API token | Delegate output to localhost
-      ansible.builtin.set_fact:
-        k3s_token: "{{ k3s_token_reg.stdout }}"
-      run_once: true
-      delegate_to: localhost
-      delegate_facts: true
