@@ -4,9 +4,6 @@
   become: true
   vars:
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-  module_defaults:
-    ansible.builtin.setup:
-      gather_timeout: 60
   roles:
     - k3s-server
 

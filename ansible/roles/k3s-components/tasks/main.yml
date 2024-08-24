@@ -145,7 +145,7 @@
 
 - name: Longhorn
   block:
-    - name: Longhorn | Install using helm
+    - name: Longhorn | Install using Helm
       kubernetes.core.helm:
         name: longhorn
         chart_ref: longhorn/longhorn
