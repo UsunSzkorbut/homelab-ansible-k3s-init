@@ -1,0 +1,4 @@
+---
+# group_vars for vagrant
+ansible_user: vagrant
+ansible_pass: vagrant
