@@ -8,9 +8,8 @@ agents:
   hosts:
     k3s-worker-01:
       ansible_host: 10.0.0.21
-      ansible_user: cloud-user
-      ansible_ssh_private_key_file: ./proxmox-k3s-vc
     k3s-worker-02:
       ansible_host: 10.0.0.22
-      ansible_user: cloud-user
-      ansible_ssh_private_key_file: ./proxmox-k3s-vc
+  vars:
+    ansible_user: cloud-user
+    ansible_ssh_private_key_file: ./proxmox-k3s-vc

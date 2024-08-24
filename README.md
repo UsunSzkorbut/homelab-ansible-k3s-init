@@ -7,7 +7,7 @@ K3s cluster init with pre-installed components as:
  - RancherOrchiestrator
 
 ## TODO:
-- [ ] Install Longhorn on the server
+- [X] Install Longhorn on the server
 - [X] Provide support for installation on multiple VMs
 - [ ] Implement error handling during the installation process
 

@@ -1,17 +1,23 @@
 ---
+- name: Prepare pre-requisites | Create temporary directory
+  ansible.builtin.file:
+    path: "{{ tmp_dir }}"
+    state: directory
+    mode: '0755'
+
 - name: Kube.conf
   block:
     - name: Kube.conf | Creating .kube directory
       ansible.builtin.file:
-        path: "{{ path.kube_dir }}"
+        path: "{{ kube_dir_path }}"
         state: directory
         mode: '0644'
 
     - name: Kube.conf | Coping k3s.yaml into .kube directory
       ansible.builtin.copy:
-        src: "{{ path.k3s.conf_src }}"
+        src: "{{ k3s.path.conf_src }}"
         remote_src: yes
-        dest: "{{ path.kube_dir }}/config"
+        dest: "{{ kube_dir_path }}/config"
         mode: '0400'
 
 - name: Metallb
@@ -19,13 +25,13 @@
     - name: Metallb | Download manifest to the cluster
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/metallb/metallb/{{ metallb.version }}/config/manifests/metallb-native.yaml
-        dest: "{{ path.metallb.manifest }}"
+        dest: "{{ metallb.path.manifest }}"
         mode: '0664'
 
     - name: Metallb | Apply manifest to the cluster
       kubernetes.core.k8s:
         state: present
-        src: "{{ path.metallb.manifest }}"
+        src: "{{ metallb.path.manifest }}"
 
     - name: Metallb | Wait till the deployment is ready
       kubernetes.core.k8s_info:
@@ -34,27 +40,26 @@
         namespace: "{{ cluster_ns.metallb }}"
         wait_sleep: 10
         wait_timeout: 360
-      register: metallb_deployment_status
 
     - name: Metallb | Create IPAddressPool manifest
       ansible.builtin.template:
         src: ipaddresses.yml.j2
-        dest: "{{ path.metallb.ipaddresses }}"
+        dest: "{{ metallb.path.ipaddresses }}"
 
     - name: Metallb | Apply IPAddressPool manifest
       kubernetes.core.k8s:
         state: present
-        src: "{{ path.metallb.ipaddresses }}"
+        src: "{{ metallb.path.ipaddresses }}"
 
     - name: Metallb | Create L2Advertisement manifest
       ansible.builtin.template:
         src: layer2.yml.j2
-        dest: "{{ path.metallb.layer2 }}"
+        dest: "{{ metallb.path.layer2 }}"
 
     - name: Metallb | Apply L2Advertisement manifest
       kubernetes.core.k8s:
         state: present
-        src: "{{ path.metallb.layer2 }}"
+        src: "{{ metallb.path.layer2 }}"
 
 - name: Install Helm
   block:
@@ -66,6 +71,11 @@
       tags: debug
       ansible.builtin.debug:
         var: helm_install.stdout_lines
+
+    - name: Add Helm repository | Longhorn
+      kubernetes.core.helm_repository:
+        name: longhorn
+        repo_url: https://charts.longhorn.io
 
 - name: Add Helm Repository
   block:
@@ -84,13 +94,13 @@
     - name: Cert-manager | Download CustomResourceDefinitions manifest
       ansible.builtin.get_url:
         url: https://github.com/jetstack/cert-manager/releases/download/{{ cert_manager.version }}/cert-manager.crds.yaml
-        dest: "{{ path.cert.creds }}"
+        dest: "{{ cert_manager.path.creds }}"
         mode: '0664'
 
     - name: Cert-manager | Apply CustomResourceDefinitions manifest to the cluster
       kubernetes.core.k8s:
         state: present
-        src: "{{ path.cert.creds }}"
+        src: "{{ cert_manager.path.creds }}"
 
     - name: Cert-manager | Install using Helm
       kubernetes.core.helm:
@@ -99,7 +109,6 @@
         chart_version: "{{ cert_manager.version }}"
         release_namespace: "{{ cluster_ns.cert }}"
         create_namespace: true
-      register: cert_manager_install_helm
 
     - name: Cert-manager | Wait till the deployment is ready
       kubernetes.core.k8s_info:
@@ -108,7 +117,6 @@
         namespace: "{{ cluster_ns.cert }}"
         wait_sleep: 10
         wait_timeout: 360
-      register: cert_manager_deployment_status
 
 - name: Rancher
   block:
@@ -125,7 +133,6 @@
             value_type: string
           - value: bootstrapPassword="{{ rancher.bootstrapPassword }}"
             value_type: raw
-      register: rancher_install_helm
 
     - name: Rancher | Wait till the deployment is ready
       kubernetes.core.k8s_info:
@@ -134,4 +141,34 @@
         namespace: "{{ cluster_ns.rancher }}"
         wait_sleep: 10
         wait_timeout: 360
+      notify: "remove_tmp"
+
+- name: Longhorn
+  block:
+    - name: Longhorn | Install using Helm
+      kubernetes.core.helm:
+        name: longhorn
+        chart_ref: longhorn/longhorn
+        chart_version: 1.7.0 #add var
+        release_namespace: longhorn-system
+        create_namespace: true
+      register: cert_manager_install_helm
+
+    - name: Longhorn | Wait till the deployment is ready
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        wait: yes
+        namespace: longhorn-system
+        wait_sleep: 10
+        wait_timeout: 360
       register: rancher_deployment_status
+
+    - name: Longhorn | Unset StorageClass local-path "default"
+      kubernetes.core.k8s_json_patch:
+        api_version: storage.k8s.io/v1
+        kind: StorageClass
+        name: local-path
+        patch:
+          - op: replace
+            path: /metadata/annotations/storageclass.kubernetes.io~1is-default-class
+            value: "false"

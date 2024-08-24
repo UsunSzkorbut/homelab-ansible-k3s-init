@@ -1,17 +1,11 @@
 ---
 # defaults file for k3s-components
 
-# filepaths
-path:
-  k3s:
-    conf_src: /etc/rancher/k3s/k3s.yaml
-  metallb:
-    manifest: /tmp/metallb-native.yaml
-    ipaddresses: /tmp/ipaddresses.yml
-    layer2: /tmp/layer2.yml
-  kube_dir: /root/.kube/
-  cert:
-    creds: /tmp/cert-manager.crds.yaml
+# temporary directory (marked for removal)
+tmp_dir: /tmp/k3s-components
+
+# .Kube directory
+kube_dir_path: /root/.kube/
 
 # namespaces
 cluster_ns:
@@ -19,15 +13,26 @@ cluster_ns:
   cert: cert-manager
   rancher: cattle-system
 
+# K3s variables
+k3s:
+  path:
+    conf_src: /etc/rancher/k3s/k3s.yaml
+
 # Metallb variables
 metallb:
   version: v0.14.8
   ippool: 10.0.0.150-10.0.0.199
   pool_name: first-pool
+  path:
+    manifest: "{{ tmp_dir }}/metallb-native.yaml"
+    ipaddresses: "{{ tmp_dir }}/ipaddresses.yml"
+    layer2: "{{ tmp_dir }}/layer2.yml"
 
 # Cert Manager variables
 cert_manager:
   version: v1.15.2
+  path:
+    creds: "{{ tmp_dir }}/cert-manager.crds.yaml"
 
 # Rancher variables
 rancher:
