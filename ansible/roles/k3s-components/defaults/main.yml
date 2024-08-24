@@ -12,6 +12,7 @@ cluster_ns:
   metallb: metallb-system
   cert: cert-manager
   rancher: cattle-system
+  longhorn: longhorn-system
 
 # K3s variables
 k3s:
@@ -38,3 +39,7 @@ cert_manager:
 rancher:
   hostname: rancher.homelab.local
   bootstrapPassword: admin
+
+# Longhorn variables
+longhorn:
+  version: 1.7.0
