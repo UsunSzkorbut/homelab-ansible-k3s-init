@@ -1,34 +1,67 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
 Vagrant.configure("2") do |config|
-    # Global config
-    config.vm.box = "bento/ubuntu-22.04"
-    config.vm.provider "vmware_desktop" do |v|
-      v.vmx["memsize"] = "4192" 
+  # Global config
+  config.vm.box = "bento/ubuntu-22.04"
+
+#   TODO
+#   # Check if required plugins are installed
+#   unless Vagrant.has_plugin?("vagrant-vmware-utility")
+#     raise 'vagrant-vmware-utility is not installed!'
+#   end
+#
+#   unless Vagrant.has_plugin?("vagrant-hostmanager")
+#     raise 'vagrant-hostmanager is not installed!'
+#   end
+
+  # Hostmanager plugin config (VirtualBox)
+  if Vagrant.has_plugin?("vagrant-hostmanager")
+    config.hostmanager.enabled = true
+    config.hostmanager.manage_host = true
+    config.hostmanager.manage_guest = true
+    config.hostmanager.ignore_private_ip = false
+    config.hostmanager.include_offline = true
+  end
+
+  # K3s Master
+  config.vm.define "k3s-master-01" do |master|
+    master.vm.hostname = "k3s-master-01"
+
+    # VMware_desktop provider configuration for K3s Master
+    master.vm.provider "vmware_desktop" do |v, override|
+      v.vmx["memsize"] = "4192"
       v.vmx["numvcpus"] = "2"
+      override.vm.network "public_network", bridge: true, ip: "10.0.0.10", auto_config: true
     end
-  
-    # K3s Master
-    config.vm.define "k3s-master-01" do |master|
-      master.vm.hostname = "k3s-master-01"
-      master.vm.provider "vmware_desktop" do |v|
-        v.vmx["memsize"] = "4192"
-        v.vmx["numvcpus"] = "2"
+
+    # VirtualBox provider configuration for K3s Master
+    master.vm.provider "virtualbox" do |v, override|
+      v.memory = "4192"
+      v.cpus = "2"
+      v.linked_clone = true
+      override.vm.network "private_network", ip: "10.0.0.10"
+    end
+  end
+
+  # K3s Workers
+  (1..2).each do |i|
+    config.vm.define "k3s-worker-0#{i}" do |worker|
+      worker.vm.hostname = "k3s-worker-0#{i}"
+
+      # VMware_desktop provider configuration for K3s Workers
+      worker.vm.provider "vmware_desktop" do |v, override|
+        v.vmx["memsize"] = "4096"
+        v.vmx["numvcpus"] = "1"
+        override.vm.network "public_network", bridge: true, ip: "10.0.0.2#{i}", auto_config: true
       end
-  
-      master.vm.network "public_network", bridge: true, ip: "10.0.0.10", auto_config: true
-  
-    end
-  
-    # K3s Workers
-    (1..2).each do |i|
-      config.vm.define "k3s-worker-0#{i}" do |worker|
-        worker.vm.hostname = "k3s-worker-0#{i}"
-        worker.vm.provider "vmware_desktop" do |v|
-          v.vmx["memsize"] = "4096"
-          v.vmx["numvcpus"] = "1"
-        end
-  
-        worker.vm.network "public_network", bridge: true, ip: "10.0.0.2#{i}", auto_config: true
-  
+
+      # VirtualBox provider configuration for K3s Workers
+      worker.vm.provider "virtualbox" do |v, override|
+        v.memory = "4096"
+        v.cpus = "1"
+        override.vm.network "private_network", ip: "10.0.0.2#{i}"
       end
     end
   end
+end
