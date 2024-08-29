@@ -69,11 +69,19 @@ terraform plan
 terraform apply -auto-approve
 ```
 
-### Run Ansible playbook
+### Run Ansible
+#### Proxmox hosts
 ```bash
 cd ansible
-ansible-playbook playbook.yml
+ansible-playbook -i inventories/proxmox playbook.yml
 ```
+
+#### Vagrant hosts
+```bash
+cd ansible
+ansible-playbook -i inventories/vagrant playbook.yml
+```
+
 Depending on the operating system of the deploy server, there may be a problem with the public key for authentication to the selected node. Change permissions in the event of a `ssh key is too open` error.
 ```bash
 chmod 0400 ./ansible/[your-key]

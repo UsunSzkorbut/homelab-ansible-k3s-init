@@ -149,8 +149,8 @@
       kubernetes.core.helm:
         name: longhorn
         chart_ref: longhorn/longhorn
-        chart_version: 1.7.0 #add var
-        release_namespace: longhorn-system
+        chart_version: "{{ longhorn.version }}"
+        release_namespace: "{{ cluster_ns.longhorn }}"
         create_namespace: true
       register: cert_manager_install_helm
 
