@@ -5,11 +5,14 @@ K3s cluster init with pre-installed components as:
  - Helm support
  - Cert-Manager
  - RancherOrchiestrator
+ - Longhorn
 
 ## TODO:
 - [X] Install Longhorn on the server
 - [X] Provide support for installation on multiple VMs
 - [ ] Implement error handling during the installation process
+- [ ] Pretasks for Vagrant boxes (updating repos)
+- [ ] Vagrantfile plugin requirements handling
 
 ## Environment specification
 

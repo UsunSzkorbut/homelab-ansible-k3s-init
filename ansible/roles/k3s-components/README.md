@@ -1,31 +1,53 @@
-Role Name
+k3s-components
 =========
 
-A brief description of the role goes here.
+An Ansible Role that installs and initializes components:
+- Metallb
+- Helm
+- Cert-Manager
+- RancherOrchiestrator
+- Longhorn
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+- [K3s](https://k3s.io/) installed on all hosts.
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+Default variables defined as follows:
+- `tmp_dir` &mdash; temporary directory path for installation script.
+- `kube_dir_path` &mdash; path for `kube.conf`.
+- `cluster_ns` &mdash; set of variables for cluster namespaces.
+- `k3s.path.conf_src` &mdash; set of nested variables for K3s.
+- `metallb` &mdash; set of nested variables for Metallb.
+- `cert_manager` &mdash; set of nested variables for Cert-Manager.
+- `rancher` &mdash; &mdash; set of nested variables for Rancher.
+- `longhorn` &mdash; set of nested variables for Longhorn.
 
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+- [kubernetes.core](https://github.com/ansible-collections/kubernetes.core)
+
+❗ **NOTE:** Role can be used supplementarily with [k3s-init](../k3s-init/README.md) role.
 
 Example Playbook
 ----------------
 
 Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
-    - hosts: servers
+    - name: An example playbook to initialize K3s components
+      hosts: localhost
+      become: true
+      vars:
+        metallb:
+          pool_name: example-name
+        rancher:
+          bootstrapPassword: admin
       roles:
-         - { role: username.rolename, x: 42 }
+        - k3s-components
 
 License
 -------
@@ -34,4 +56,6 @@ License
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+This role was created in 2024 by:
+- [UsunSzkorbut](https://github.com/UsunSzkorbut)
+- [kjanxloonix](https://github.com/kjanxloonix)
