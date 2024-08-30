@@ -23,7 +23,7 @@ Default variables defined as follows:
 - `k3s.path.conf_src` &mdash; set of nested variables for K3s.
 - `metallb` &mdash; set of nested variables for Metallb.
 - `cert_manager` &mdash; set of nested variables for Cert-Manager.
-- `rancher` &mdash; &mdash; set of nested variables for Rancher.
+- `rancher` &mdash; set of nested variables for Rancher.
 - `longhorn` &mdash; set of nested variables for Longhorn.
 
 Dependencies
