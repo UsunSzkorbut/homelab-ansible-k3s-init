@@ -14,6 +14,10 @@ K3s cluster init with pre-installed components as:
 - [ ] Pretasks for Vagrant boxes (updating repos)
 - [ ] Vagrantfile plugin requirements handling
 
+## Future TODO:
+- [ ] Implement Extra Node for ETCD
+- [ ] Taint server node
+
 ## Environment specification
 
 ✅ **Test Environment:** All components have been successfully tested on the cloud base image of **Ubuntu Server 22.04 LTS**.
