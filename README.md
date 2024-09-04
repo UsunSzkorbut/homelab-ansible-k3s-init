@@ -10,13 +10,13 @@ K3s cluster init with pre-installed components as:
 ## TODO:
 - [X] Install Longhorn on the server
 - [X] Provide support for installation on multiple VMs
+- [X] Taint server node
 - [ ] Implement error handling during the installation process
 - [X] Pretasks for Vagrant boxes (updating repos)
 - [ ] Vagrantfile plugin requirements handling
 
 ## Future TODO:
 - [ ] Implement Extra Node for ETCD
-- [ ] Taint server node
 
 ## Environment specification
 
