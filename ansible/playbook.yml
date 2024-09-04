@@ -4,6 +4,10 @@
   become: true
   vars:
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  pre_tasks:
+    - name: Update repositories
+      ansible.builtin.apt:
+        update_cache: true
   roles:
     - k3s-init
 

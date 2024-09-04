@@ -11,7 +11,7 @@ K3s cluster init with pre-installed components as:
 - [X] Install Longhorn on the server
 - [X] Provide support for installation on multiple VMs
 - [ ] Implement error handling during the installation process
-- [ ] Pretasks for Vagrant boxes (updating repos)
+- [X] Pretasks for Vagrant boxes (updating repos)
 - [ ] Vagrantfile plugin requirements handling
 
 ## Future TODO:
