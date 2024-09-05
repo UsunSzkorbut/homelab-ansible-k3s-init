@@ -57,7 +57,7 @@ vagrant destroy -f
 #### Vagrant private keys
 Default private keys for Vagrant boxes may have too open permissions. It can be set manually for each key in `.vagrant` directory:
 ```bash
-chmod 0400 .vagrant/machines/provider/box-name
+chmod 0400 .vagrant/machines/provider/box-name/private_key
 ```
 Or by running predefined script:
 ```bash
