@@ -11,11 +11,9 @@ K3s cluster init with pre-installed components as:
 - [X] Install Longhorn on the server
 - [X] Provide support for installation on multiple VMs
 - [X] Taint server node
-- [ ] Implement error handling during the installation process
 - [X] Pretasks for Vagrant boxes (updating repos)
+- [ ] Implement error handling during the installation process
 - [ ] Vagrantfile plugin requirements handling
-
-## Future TODO:
 - [ ] Implement Extra Node for ETCD
 
 ## Environment specification
@@ -94,9 +92,7 @@ Depending on the operating system of the deploy server, there may be a problem w
 chmod 0400 ./ansible/[your-key]
 ```
 
-## For Vagrant deployment:
-- [Vagrant support](./vagrant/README.md)
-
 ## More information:
+- [Vagrant support](./vagrant/README.md)
 - [k3s-init role](./ansible/roles/k3s-init/README.md)
 - [k3s-components role](./ansible/roles/k3s-components/README.md)
