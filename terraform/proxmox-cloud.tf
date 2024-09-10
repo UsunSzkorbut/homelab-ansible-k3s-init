@@ -12,7 +12,7 @@ resource "proxmox_vm_qemu" "cloud-k3s-master" {
     sockets = 1
     vcpus = 0
     cpu = "host"
-    memory = 4096
+    memory = 8192
     name = "k3s-master-0${count.index + 1}"
 
     scsihw   = "virtio-scsi-single" 
@@ -57,7 +57,7 @@ resource "proxmox_vm_qemu" "cloud-k3s-worker" {
     sockets = 1
     vcpus = 0
     cpu = "host"
-    memory = 6144
+    memory = 12288
     name = "k3s-worker-0${count.index + 1}"
 
     scsihw   = "virtio-scsi-single"
