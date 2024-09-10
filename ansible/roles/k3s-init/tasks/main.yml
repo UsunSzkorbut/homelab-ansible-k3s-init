@@ -16,6 +16,14 @@
           - kubernetes
           - jsonpatch
 
+    - name: Prepare pre-requisites | Install nfs-common
+      ansible.builtin.apt:
+        name: nfs-common
+      register: nfs_install_result
+      until: nfs_install_result is succeeded
+      retries: 5
+      delay: 15
+
     - name: Prepare pre-requisites | Create temporary directory
       ansible.builtin.file:
         path: "{{ tmp_dir }}"
