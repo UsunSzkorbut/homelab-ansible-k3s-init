@@ -51,8 +51,8 @@
           delegate_facts: true
       when: inventory_hostname in groups['server']
       
-    - name: Install K3s | Run install script
-      ansible.builtin.shell: INSTALL_K3S_VERSION={{ k3s.version }} K3S_KUBECONFIG_MODE="644" INSTALL_K3S_EXEC="agent" K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_default_ipv4.address }}:6443  K3S_TOKEN={{ hostvars['localhost'].k3s_token }} {{ k3s.path.install }}
+    - name: Install K3s | Run install script on agents
+      ansible.builtin.shell: INSTALL_K3S_VERSION={{ k3s.version }} INSTALL_K3S_EXEC="agent" K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_default_ipv4.address }}:6443  K3S_TOKEN={{ hostvars['localhost'].k3s_token }} {{ k3s.path.install }}
       args:
         creates: "{{ k3s.path.bin }}"
       when: inventory_hostname in groups['agents']
@@ -67,4 +67,3 @@
         msg: "Successfully installed version: {{ k3s_ver.stdout }}"
   notify: "remove_tmp"
         
-
