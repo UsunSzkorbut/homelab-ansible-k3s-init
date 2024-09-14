@@ -9,11 +9,16 @@ K3s cluster init with pre-installed components as:
  - Longhorn / default storage-class driver
 
 ## TODO:
-- [X] Install Longhorn on the server
+#### Kubernetes
+- [X] Install Longhorn on the server (with support pkg)
+- [X] Taint server - master01 node
+- [X] Install Nginx Ingress Controller
+- [X] Prepare Ingress for Rancher on basis of Nginx
+- [ ] ???
+#### Ansible
 - [X] Provide support for installation on multiple VMs
-- [X] Taint server node
 - [X] Pretasks for Vagrant boxes (updating repos)
-- [X] Implement Extra Node for HA with Taint
+- [X] Implement Extra Node for HA
 - [ ] Implement error handling during the installation process
 - [ ] Vagrantfile plugin requirements handling
 
