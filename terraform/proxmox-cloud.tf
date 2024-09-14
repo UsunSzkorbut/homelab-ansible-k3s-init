@@ -1,7 +1,7 @@
 resource "proxmox_vm_qemu" "cloud-k3s-master" {
     target_node = "homelab"
     desc = "Cloud Ubuntu 22.04"
-    count = 1
+    count = 2
     onboot = true
 
     clone = "ubuntu-cloud"
@@ -23,7 +23,7 @@ resource "proxmox_vm_qemu" "cloud-k3s-master" {
                 disk {
                   storage = "local-lvm"
                   emulatessd = true
-                  size = 150
+                  size = 50
                 }
             }
         }
@@ -40,7 +40,7 @@ resource "proxmox_vm_qemu" "cloud-k3s-master" {
         model = "virtio"
         bridge = "vmbr0"
     }
-    ipconfig0 = "ip=10.0.0.10/24,gw=10.0.0.1"
+    ipconfig0 = "ip=10.0.0.1${count.index + 1}/24,gw=10.0.0.1"
 }
 
 resource "proxmox_vm_qemu" "cloud-k3s-worker" {
@@ -57,7 +57,7 @@ resource "proxmox_vm_qemu" "cloud-k3s-worker" {
     sockets = 1
     vcpus = 0
     cpu = "host"
-    memory = 12288
+    memory = 8192
     name = "k3s-worker-0${count.index + 1}"
 
     scsihw   = "virtio-scsi-single"
