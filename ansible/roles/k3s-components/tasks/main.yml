@@ -89,6 +89,28 @@
         name: jetstack
         repo_url: https://charts.jetstack.io
 
+    - name: Add Helm repository | Nginx Ingress Controller
+      kubernetes.core.helm_repository:
+        name: ingress-nginx
+        repo_url: https://kubernetes.github.io/ingress-nginx
+
+- name: Nginx
+  block:
+    - name: Nginx Ingress Controller | Install Nginx Ingress Controller via Helm
+      kubernetes.core.helm:
+        name: ingress-nginx
+        chart_ref: ingress-nginx/ingress-nginx
+        release_namespace: ingress-nginx
+        create_namespace: true
+
+    - name: Nginx Ingress Controller | Wait till the deployment is ready
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        wait: yes
+        namespace: ingress-nginx #add var
+        wait_sleep: 10
+        wait_timeout: 360
+
 - name: Cert-manager
   block:
     - name: Cert-manager | Download CustomResourceDefinitions manifest
@@ -141,7 +163,16 @@
         namespace: "{{ cluster_ns.rancher }}"
         wait_sleep: 10
         wait_timeout: 360
-      notify: "remove_tmp"
+
+    - name: Rancher | Apply JSON patch to add ingressClassName Nginx
+      kubernetes.core.k8s_json_patch:
+        namespace: cattle-system
+        kind: Ingress
+        name: rancher
+        patch:
+          - op: add
+            path: /spec/ingressClassName
+            value: "nginx"
 
 - name: Longhorn
   block:
@@ -172,3 +203,4 @@
           - op: replace
             path: /metadata/annotations/storageclass.kubernetes.io~1is-default-class
             value: "false"
+  notify: "remove_tmp"
