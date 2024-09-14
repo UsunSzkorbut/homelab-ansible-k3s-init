@@ -2,20 +2,20 @@
 
 K3s cluster init with pre-installed components as:
  - Metallb
- - Helm support
+ - Helm support / on master01
  - Cert-Manager
- - Nginx Ingress Controller
+ - Nginx Ingress Controller / Traefik is not installed
  - RancherOrchiestrator
- - Longhorn
+ - Longhorn / default storage-class driver
 
 ## TODO:
 - [X] Install Longhorn on the server
 - [X] Provide support for installation on multiple VMs
 - [X] Taint server node
 - [X] Pretasks for Vagrant boxes (updating repos)
+- [X] Implement Extra Node for HA with Taint
 - [ ] Implement error handling during the installation process
 - [ ] Vagrantfile plugin requirements handling
-- [X] Implement Extra Node for HA with Taint
 
 ## Environment specification
 
@@ -47,8 +47,8 @@ qm set 5000 --serial0 socket --vga serial0
 ## Cluster Topology
 | Role       | Specification    | Hostname        |IP               |
 |:----------|:----------------|:---------------:|:---------------:|
-| master     | Workload NoSchedule  | k3s-master-01 |     10.0.0.10   |
-| master + agent     | Workload ready   | k3s-master-02 |     10.0.0.10   |
+| master     | Workload NoSchedule  | k3s-master-01 |     10.0.0.11   |
+| master + agent     | Workload ready   | k3s-master-02 |     10.0.0.12   |
 | agent      | Workload ready   | k3s-worker-01 |     10.0.0.21   |
 | agent      | Workload ready   | k3s-worker-02 |     10.0.0.22   |
 
