@@ -4,6 +4,7 @@ K3s cluster init with pre-installed components as:
  - Metallb
  - Helm support
  - Cert-Manager
+ - Nginx Ingress Controller
  - RancherOrchiestrator
  - Longhorn
 
@@ -14,7 +15,7 @@ K3s cluster init with pre-installed components as:
 - [X] Pretasks for Vagrant boxes (updating repos)
 - [ ] Implement error handling during the installation process
 - [ ] Vagrantfile plugin requirements handling
-- [ ] Implement Extra Node for ETCD
+- [X] Implement Extra Node for HA with Taint
 
 ## Environment specification
 
@@ -43,15 +44,22 @@ qm set 5000 --serial0 socket --vga serial0
 | Ansible    |     Core 2.16.10       |
 | Terraform  |     v1.9.4       |
 
-## Cluster Network Topology
-| Role       | IP              |
-|:----------:|:---------------:|
-| server     |     10.0.0.10   |
-| agent      |     10.0.0.21   |
-| agent      |     10.0.0.22   |
+## Cluster Topology
+| Role       | Specification    | Hostname        |IP               |
+|:----------|:----------------|:---------------:|:---------------:|
+| master     | Workload NoSchedule  | k3s-master-01 |     10.0.0.10   |
+| master + agent     | Workload ready   | k3s-master-02 |     10.0.0.10   |
+| agent      | Workload ready   | k3s-worker-01 |     10.0.0.21   |
+| agent      | Workload ready   | k3s-worker-02 |     10.0.0.22   |
+
+To balance high availability with limited resources, a 4-node cluster was set up, consisting of 2 master nodes and 2 worker nodes.
+
+- **Master01** [k3s-master-01] serves as a dedicated control plane with an ETCD database. It ensures operational continuity in case of failure of the second master but is not configured to accept any new tasks.
+- **Master02** [k3s-master-02] has an identical configuration to Master 1 but is designed to accept and manage tasks alongside its control-plane responsibilities.
+
+This architecture ensures redundancy while maximizing resource efficiency.
 
 ### Installation
-
 Terraform Installation for Ubuntu 22.04 LTS:
 ```bash
 wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
