@@ -12,7 +12,7 @@
     - k3s-init
 
 - name: K3s Components Install
-  hosts: server
+  hosts: server-etcd
   become: true
   vars:
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
