@@ -10,17 +10,18 @@ K3s cluster init with pre-installed components as:
 
 ## TODO:
 #### Kubernetes
-- [X] Install Longhorn on the server (with support pkg)
+- [X] Install Longhorn on the server (with supported pkg)
 - [X] Taint server - master01 node
 - [X] Install Nginx Ingress Controller
 - [X] Prepare Ingress for Rancher on basis of Nginx
-- [ ] ???
+- [ ] Install other components 
 #### Ansible
 - [X] Provide support for installation on multiple VMs
 - [X] Pretasks for Vagrant boxes (updating repos)
 - [X] Implement Extra Node for HA
 - [ ] Implement error handling during the installation process
 - [ ] Vagrantfile plugin requirements handling
+- [ ] Optimalize and tag Ansible
 
 ## Environment specification
 
