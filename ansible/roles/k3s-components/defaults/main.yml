@@ -35,6 +35,11 @@ cert_manager:
   path:
     creds: "{{ tmp_dir }}/cert-manager.crds.yaml"
 
+#Nginx Ingress Controller variables
+nginx_ingress_controller:
+  path:
+    creds: "{{ tmp_dir }}/crds.yaml"
+
 # Rancher variables
 rancher:
   hostname: rancher.homelab.local
