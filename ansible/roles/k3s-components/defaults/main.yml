@@ -10,6 +10,7 @@ kube_dir_path: /root/.kube/
 # namespaces
 cluster_ns:
   metallb: metallb-system
+  nginx: ingress-nginx
   cert: cert-manager
   rancher: cattle-system
   longhorn: longhorn-system
