@@ -3,7 +3,7 @@
   hosts: all
   become: true
   vars:
-    use_vagrant: true
+    use_vagrant: false
   pre_tasks:
     - name: Update repositories
       ansible.builtin.apt:
