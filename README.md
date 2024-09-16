@@ -14,7 +14,7 @@ K3s cluster init with pre-installed components as:
 - [X] Taint server - master01 node
 - [X] Install Nginx Ingress Controller
 - [X] Prepare Ingress for Rancher on basis of Nginx
-- [ ] Install other components 
+- [ ] Install Monitoring Stack (PG)
 #### Ansible
 - [X] Provide support for installation on multiple VMs
 - [X] Pretasks for Vagrant boxes (updating repos)
