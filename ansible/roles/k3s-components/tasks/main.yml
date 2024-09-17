@@ -66,7 +66,7 @@
     - name: Install Helm | Execute install script
       ansible.builtin.shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
       register: helm_install
-  
+
     - name: Install Helm | Display Helm installation output
       tags: debug
       ansible.builtin.debug:
@@ -107,14 +107,14 @@
         name: nginx-ingress
         chart_ref: oci://ghcr.io/nginxinc/charts/nginx-ingress
         chart_version: "1.3.2"
-        release_namespace: ingress-nginx
+        release_namespace: "{{ cluster_ns.nginx }}"
         create_namespace: true
 
     - name: Nginx Ingress Controller | Wait till the deployment is ready
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
-        namespace: ingress-nginx #add var
+        namespace: "{{ cluster_ns.nginx }}"
         wait_sleep: 10
         wait_timeout: 360
 
@@ -173,7 +173,7 @@
 
     - name: Rancher | Apply JSON patch to add ingressClassName Nginx
       kubernetes.core.k8s_json_patch:
-        namespace: cattle-system
+        namespace: "{{ cluster_ns.rancher }}"
         kind: Ingress
         name: rancher
         patch:
@@ -196,7 +196,7 @@
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
-        namespace: longhorn-system
+        namespace: "{{ cluster_ns.longhorn }}"
         wait_sleep: 10
         wait_timeout: 360
       register: rancher_deployment_status

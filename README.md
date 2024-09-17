@@ -14,14 +14,16 @@ K3s cluster init with pre-installed components as:
 - [X] Taint server - master01 node
 - [X] Install Nginx Ingress Controller
 - [X] Prepare Ingress for Rancher on basis of Nginx
-- [ ] Install Monitoring Stack (PG)
 #### Ansible
 - [X] Provide support for installation on multiple VMs
 - [X] Pretasks for Vagrant boxes (updating repos)
 - [X] Implement Extra Node for HA
 - [ ] Implement error handling during the installation process
+    - [ ] Add registers for error handling
+- [ ] Optimize and tag Ansible
+- [ ] Update roles README
+#### Vagrant
 - [ ] Vagrantfile plugin requirements handling
-- [ ] Optimalize and tag Ansible
 
 ## Environment specification
 
@@ -96,8 +98,15 @@ ansible-playbook -i inventories/proxmox playbook.yml
 ```
 
 #### Vagrant hosts
+Requires specifying the usege of Vagrant by variable `use_vagrant`, which can be set inline:
 ```bash
 cd ansible
+ansible-playbook -i inventories/vagrant playbook.yml -e "use_vagrant=true"
+```
+Or explicitly in the default playbook or default variables of the [k3s-init role](./ansible/roles/k3s-init/README.md):
+```bash
+cd ansible
+# use_vagrant: true in playbook.yml
 ansible-playbook -i inventories/vagrant playbook.yml
 ```
 
