@@ -6,12 +6,6 @@ Vagrant.configure("2") do |config|
   config.vm.box = "bento/ubuntu-22.04"
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
-#   # TODO
-#   # Check if required plugins are installed
-#   unless Vagrant.has_plugin?("vagrant-vmware-utility")
-#     raise 'vagrant-vmware-utility is not installed!'
-#   end
-
 if Vagrant.has_plugin?("vagrant-timezone")
   config.timezone.value = :host
 end
