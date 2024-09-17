@@ -23,7 +23,7 @@ K3s cluster init with pre-installed components as:
 - [ ] Optimize and tag Ansible
 - [ ] Update roles README
 #### Vagrant
-- [ ] Vagrantfile plugin requirements handling
+- [X] Vagrantfile plugin requirements handling
 
 ## Environment specification
 
