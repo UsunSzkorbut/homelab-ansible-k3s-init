@@ -2,3 +2,4 @@
 # group_vars for ansible playbooks
 vagrant_dir: ../vagrant/.vagrant
 vagrant_provider: virtualbox
+use_vagrant: false
