@@ -65,3 +65,9 @@ chmod 755 ./scripts/set-privkey-perms.sh
 
 #### Ansible default Vagrant variables
 Default Vagrant directory path and provider are defined in `ansible/group_vars/all.yml` and must be set accordingly.
+
+Variable defining Vagrant usage (`use_vagrant`) must be set accordingly and is specified in files:
+ - `ansible/group_vars/all.yml`
+ - `ansible/roles/k3s-init/default/all.yml`[^2]
+
+[^2]: Refer to [k3s-init role](../ansible/roles/k3s-init/README.md) documentation.
