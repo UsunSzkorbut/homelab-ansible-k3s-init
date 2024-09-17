@@ -1,19 +1,29 @@
 ---
 - name: Prepare pre-requisites | Create temporary directory
+  tags:
+    - prereq
+    - with_module
   ansible.builtin.file:
     path: "{{ tmp_dir }}"
     state: directory
     mode: '0755'
 
 - name: Kube.conf
+  tags:
+    - k3s
+    - prereq
   block:
     - name: Kube.conf | Creating .kube directory
+      tags:
+        - with_module
       ansible.builtin.file:
         path: "{{ kube_dir_path }}"
         state: directory
         mode: '0644'
 
     - name: Kube.conf | Coping k3s.yaml into .kube directory
+      tags:
+        - with_module
       ansible.builtin.copy:
         src: "{{ k3s.path.conf_src }}"
         remote_src: yes
@@ -21,19 +31,28 @@
         mode: '0400'
 
 - name: Metallb
+  tags:
+    - metallb
   block:
     - name: Metallb | Download manifest to the cluster
+      tags:
+        - download
+        - with_module
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/metallb/metallb/{{ metallb.version }}/config/manifests/metallb-native.yaml
         dest: "{{ metallb.path.manifest }}"
         mode: '0664'
 
     - name: Metallb | Apply manifest to the cluster
+      tags:
+        - with_kubernetes_core
       kubernetes.core.k8s:
         state: present
         src: "{{ metallb.path.manifest }}"
 
     - name: Metallb | Wait till the deployment is ready
+      tags:
+        - with_kubernetes_core
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
@@ -42,67 +61,104 @@
         wait_timeout: 360
 
     - name: Metallb | Create IPAddressPool manifest
+      tags:
+        - with_template
       ansible.builtin.template:
         src: ipaddresses.yml.j2
         dest: "{{ metallb.path.ipaddresses }}"
 
     - name: Metallb | Apply IPAddressPool manifest
+      tags:
+        - with_kubernetes_core
       kubernetes.core.k8s:
         state: present
         src: "{{ metallb.path.ipaddresses }}"
 
     - name: Metallb | Create L2Advertisement manifest
+      tags:
+        - with_template
       ansible.builtin.template:
         src: layer2.yml.j2
         dest: "{{ metallb.path.layer2 }}"
 
     - name: Metallb | Apply L2Advertisement manifest
+      tags:
+        - with_kubernetes_core
       kubernetes.core.k8s:
         state: present
         src: "{{ metallb.path.layer2 }}"
 
 - name: Install Helm
+  tags:
+    - helm
   block:
     - name: Install Helm | Execute install script
+      tags:
+        - install
+        - with_shell
       ansible.builtin.shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
       register: helm_install
 
     - name: Install Helm | Display Helm installation output
-      tags: debug
+      tags:
+        - verify
+        - with_debug
       ansible.builtin.debug:
         var: helm_install.stdout_lines
 
     - name: Add Helm repository | Longhorn
+      tags:
+        - longhorn
+        - with_kubernetes_core
       kubernetes.core.helm_repository:
         name: longhorn
         repo_url: https://charts.longhorn.io
 
 - name: Add Helm Repository
+  tags:
+    - helm
   block:
     - name: Add Helm repository | Rancher
+      tags:
+        - rancher
+        - with_kubernetes_core
       kubernetes.core.helm_repository:
         name: rancher-latest
         repo_url: https://releases.rancher.com/server-charts/latest
 
     - name: Add Helm repository | Cert-manager
+      tags:
+        - cert_manager
+        - with_kuberenetes_core
       kubernetes.core.helm_repository:
         name: jetstack
         repo_url: https://charts.jetstack.io
 
 - name: Nginx Ingress Controller
+  tags:
+    - nginx
   block:
     - name: Nginx Ingress Controller | Download CustomResourceDefinitions manifest
+      tags:
+        - download
+        - with_module
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.2/deploy/crds.yaml
         dest: "{{ nginx_ingress_controller.path.creds }}"
         mode: '0664'
 
     - name: Nginx Ingress Controller | Apply CustomResourceDefinitions manifest to the cluster
+      tags:
+        - with_kuberenetes_core
       kubernetes.core.k8s:
         state: present
         src: "{{ nginx_ingress_controller.path.creds }}"
 
     - name: Install NGINX Ingress using Helm
+      tags:
+        - helm
+        - install
+        - with_kuberenetes_core
       kubernetes.core.helm:
         name: nginx-ingress
         chart_ref: oci://ghcr.io/nginxinc/charts/nginx-ingress
@@ -111,6 +167,8 @@
         create_namespace: true
 
     - name: Nginx Ingress Controller | Wait till the deployment is ready
+      tags:
+        - with_kuberenetes_core
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
@@ -119,19 +177,30 @@
         wait_timeout: 360
 
 - name: Cert-manager
+  tags:
+    - cert_manager
   block:
     - name: Cert-manager | Download CustomResourceDefinitions manifest
+      tags:
+        - download
+        - with_module
       ansible.builtin.get_url:
         url: https://github.com/jetstack/cert-manager/releases/download/{{ cert_manager.version }}/cert-manager.crds.yaml
         dest: "{{ cert_manager.path.creds }}"
         mode: '0664'
 
     - name: Cert-manager | Apply CustomResourceDefinitions manifest to the cluster
+      tags:
+        - with_kuberenetes_core
       kubernetes.core.k8s:
         state: present
         src: "{{ cert_manager.path.creds }}"
 
     - name: Cert-manager | Install using Helm
+      tags:
+        - helm
+        - install
+        - with_kuberenetes_core
       kubernetes.core.helm:
         name: cert-manager
         chart_ref: jetstack/cert-manager
@@ -140,6 +209,8 @@
         create_namespace: true
 
     - name: Cert-manager | Wait till the deployment is ready
+      tags:
+        - with_kuberenetes_core
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
@@ -148,8 +219,14 @@
         wait_timeout: 360
 
 - name: Rancher
+  tags:
+    - rancher
   block:
     - name: Rancher | Install using Helm
+      tags:
+        - helm
+        - install
+        - with_kubernetes_core
       kubernetes.core.helm:
         name: rancher
         chart_ref: rancher-latest/rancher
@@ -164,6 +241,8 @@
             value_type: raw
 
     - name: Rancher | Wait till the deployment is ready
+      tags:
+        - with_kuberenetes_core
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
@@ -172,6 +251,10 @@
         wait_timeout: 360
 
     - name: Rancher | Apply JSON patch to add ingressClassName Nginx
+      tags:
+        - nginx
+        - json_patch
+        - with_kuberenetes_core
       kubernetes.core.k8s_json_patch:
         namespace: "{{ cluster_ns.rancher }}"
         kind: Ingress
@@ -182,26 +265,35 @@
             value: "nginx"
 
 - name: Longhorn
+  tags:
+    - longhorn
   block:
     - name: Longhorn | Install using Helm
+      tags:
+        - helm
+        - install
+        - with_kuberenetes_core
       kubernetes.core.helm:
         name: longhorn
         chart_ref: longhorn/longhorn
         chart_version: "{{ longhorn.version }}"
         release_namespace: "{{ cluster_ns.longhorn }}"
         create_namespace: true
-      register: cert_manager_install_helm
 
     - name: Longhorn | Wait till the deployment is ready
+      tags:
+        - with_kuberenetes_core
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
         namespace: "{{ cluster_ns.longhorn }}"
         wait_sleep: 10
         wait_timeout: 360
-      register: rancher_deployment_status
 
     - name: Longhorn | Unset StorageClass local-path "default"
+      tags:
+        - json_patch
+        - with_kuberenetes_core
       kubernetes.core.k8s_json_patch:
         api_version: storage.k8s.io/v1
         kind: StorageClass
