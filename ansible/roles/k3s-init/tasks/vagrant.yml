@@ -1,0 +1,160 @@
+---
+- name: Prepare pre-requisites
+  block:
+    - name: Prepare pre-requisites | Install apt packages
+      tags:
+        - prereq
+        - apt
+        - with_module
+      ansible.builtin.apt:
+        name:
+          - python3-pip
+          - nfs-common
+      register: apt_install_result
+      until: apt_install_result is succeeded
+      retries: 5
+      delay: 30
+
+    - name: Prepare pre-requisites | Install Python3-REQ
+      tags:
+        - prereq
+        - pip
+        - with_module
+      ansible.builtin.pip:
+        name:
+          - pyyaml
+          - kubernetes
+          - jsonpatch
+
+    - name: Prepare pre-requisites | Create temporary directory
+      tags:
+        - prereq
+        - with_module
+      ansible.builtin.file:
+        path: "{{ tmp_dir }}"
+        state: directory
+        mode: '0755'
+
+- name: Install K3s
+  block:
+    - name: Install K3s | Download install script
+      tags:
+        - k3s
+        - download
+        - with_module
+      ansible.builtin.get_url:
+        url: https://get.k3s.io
+        dest: "{{ k3s.path.install }}"
+        mode: '0755'
+#--node-taint CriticalAddonsOnly=true:NoExecute
+#--node-taint node-role.kubernetes.io/master=true:NoSchedule
+    - name: Install K3s | Run install script on tainted master
+      tags:
+        - k3s
+        - install
+        - tainted_master
+        - with_shell
+      ansible.builtin.shell: >
+        INSTALL_K3S_VERSION={{ k3s.version }}
+        K3S_KUBECONFIG_MODE="644"
+        INSTALL_K3S_EXEC="--cluster-init --disable servicelb --disable traefik --node-taint node-role.kubernetes.io/master=true:NoSchedule"
+        {{ k3s.path.install }}
+      args:
+        creates: "{{ k3s.path.bin }}"
+      when: inventory_hostname in groups['servers'][0]
+
+    - name: Delegate K3s API token
+      tags:
+        - k3s
+        - token_delegation
+        - tainted_master
+      block:
+        - name: Delegate K3s API token | Save file output to register
+          tags:
+            - with_shell
+          ansible.builtin.shell: cat {{ k3s.path.node_token }} | tr -d " \t\n\r"
+          register: k3s_token_reg
+
+        - name: Delegate K3s API token | Delegate output to localhost
+          tags:
+            - with_module
+          ansible.builtin.set_fact:
+            k3s_token: "{{ k3s_token_reg.stdout }}"
+          run_once: true
+          delegate_to: localhost
+          delegate_facts: true
+      when: inventory_hostname in groups['servers'][0]
+
+    - name: Install K3s | Run install script on master server
+      tags:
+        - k3s
+        - install
+        - regular_master
+      block:
+      - name: Install K3s | Run install script on master server
+        tags:
+          - with_shell
+        ansible.builtin.shell: >
+          INSTALL_K3S_VERSION={{ k3s.version }}
+          K3S_KUBECONFIG_MODE="644"
+          INSTALL_K3S_EXEC="server --disable traefik"
+          K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_eth1.ipv4.address }}:6443
+          K3S_TOKEN={{ hostvars['localhost'].k3s_token }}
+          {{ k3s.path.install }}
+        args:
+          creates: "{{ k3s.path.bin }}"
+        register: reg_k3s_master
+      rescue:
+        - name: K3S installation failed on master server
+          tags:
+            - error_handling
+            - with_debug
+          ansible.builtin.debug:
+            msg: "{{ reg_k3s_master.stderr_lines }}"
+          notify: "remove_tmp"
+      when: inventory_hostname in groups['servers'][1]
+
+    - name: Install K3s | Run install script on agents
+      tags:
+        - k3s
+        - install
+        - agents
+        - with_shell
+      ansible.builtin.shell:
+        INSTALL_K3S_VERSION={{ k3s.version }}
+        INSTALL_K3S_EXEC="agent"
+        K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_eth1.ipv4.address }}:6443
+        K3S_TOKEN={{ hostvars['localhost'].k3s_token }}
+        {{ k3s.path.install }}
+      args:
+        creates: "{{ k3s.path.bin }}"
+      when:
+        - inventory_hostname in groups['agents']
+
+    - name: Install K3s | Verify installation
+      tags:
+        - verify
+        - with_command
+      ansible.builtin.command: k3s --version
+      register: k3s_ver
+
+    - name: Install K3s | Output version
+      tags:
+        - verify
+        - with_debug
+      ansible.builtin.debug:
+        msg: "Successfully installed version: {{ k3s_ver.stdout }}"
+  notify: "remove_tmp"
+
+
+
+
+
+
+
+
+
+
+
+
+
