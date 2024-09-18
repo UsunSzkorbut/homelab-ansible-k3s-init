@@ -5,6 +5,10 @@ Vagrant.configure("2") do |config|
   # Global config
   config.vm.box = "bento/ubuntu-22.04"
   config.vm.synced_folder ".", "/vagrant", disabled: true
+  # Enable VirtualBox NAT DNS Proxy
+  config.vm.provider "virtualbox" do |v|
+    v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+  end
 
 if Vagrant.has_plugin?("vagrant-timezone")
   config.timezone.value = :host
@@ -28,6 +32,7 @@ end
         v.cpus = "2"
         v.linked_clone = true
         override.vm.network "private_network", ip: "10.0.0.1#{i}", auto_config: true
+        override.vm.base_mac = nil
       end
     end
   end
@@ -50,6 +55,7 @@ end
         v.cpus = "1"
         v.linked_clone = true
         override.vm.network "private_network", ip: "10.0.0.2#{i}", auto_config: true
+        override.vm.base_mac = nil
       end
     end
   end
