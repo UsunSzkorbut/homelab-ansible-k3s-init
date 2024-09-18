@@ -1,5 +1,5 @@
 ---
 # group_vars for ansible playbooks
 vagrant_dir: ../vagrant/.vagrant
-vagrant_provider: virtualbox
+vagrant_provider: vmware_desktop
 use_vagrant: false
