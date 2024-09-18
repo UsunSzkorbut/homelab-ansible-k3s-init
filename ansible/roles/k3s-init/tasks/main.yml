@@ -1,14 +1,154 @@
 ---
-- name: Include tasks for Vagrant configuration
-  ansible.builtin.include_tasks:
-    file: vagrant.yml
-    apply:
-      tags: vagrant
-  when: use_vagrant
+- name: Prepare pre-requisites
+  block:
+    - name: Prepare pre-requisites | Install apt packages
+      tags:
+        - prereq
+        - apt
+        - with_module
+      ansible.builtin.apt:
+        name:
+          - python3-pip
+          - nfs-common
+      register: apt_install_result
+      until: apt_install_result is succeeded
+      retries: 5
+      delay: 30
 
-- name: Include tasks for Proxmox configuration
-  ansible.builtin.include_tasks:
-    file: proxmox.yml
-    apply:
-      tags: proxmox
-  when: not use_vagrant
+    - name: Prepare pre-requisites | Install Python3-REQ
+      tags:
+        - prereq
+        - pip
+        - with_module
+      ansible.builtin.pip:
+        name:
+          - pyyaml
+          - kubernetes
+          - jsonpatch
+
+    - name: Prepare pre-requisites | Create temporary directory
+      tags:
+        - prereq
+        - with_module
+      ansible.builtin.file:
+        path: "{{ tmp_dir }}"
+        state: directory
+        mode: '0755'
+
+- name: Install K3s
+  block:
+    - name: Install K3s | Download install script
+      tags:
+        - k3s
+        - download
+        - with_module
+      ansible.builtin.get_url:
+        url: https://get.k3s.io
+        dest: "{{ k3s.path.install }}"
+        mode: '0755'
+
+    - name: Install K3s | Run install script on tainted master
+      tags:
+        - k3s
+        - install
+        - tainted_master
+        - include_tasks
+      block:
+        - name: Include task for Proxmox tainted master
+          tags:
+            - proxmox
+          ansible.builtin.include_tasks: proxmox/tainted_master.yml
+          when: not use_vagrant
+
+        - name: Include task for Vagrant tainted master
+          tags:
+            - vagrant
+          ansible.builtin.include_tasks: vagrant/tainted_master.yml
+          when: use_vagrant
+      when: inventory_hostname in groups['servers'][0]
+
+    - name: Delegate K3s API token
+      tags:
+        - k3s
+        - token_delegation
+        - tainted_master
+      block:
+        - name: Delegate K3s API token | Save file output to register
+          tags:
+            - with_shell
+          ansible.builtin.shell: cat {{ k3s.path.node_token }} | tr -d " \t\n\r"
+          register: k3s_token_reg
+
+        - name: Delegate K3s API token | Delegate output to localhost
+          tags:
+            - with_module
+          ansible.builtin.set_fact:
+            k3s_token: "{{ k3s_token_reg.stdout }}"
+          run_once: true
+          delegate_to: localhost
+          delegate_facts: true
+      when: inventory_hostname in groups['servers'][0]
+
+    - name: Install K3s | Run install script on master server
+      tags:
+        - k3s
+        - install
+        - regular_master
+        - include_tasks
+      block:
+        - name: Include task for Proxmox regular master
+          tags:
+            - proxmox
+          ansible.builtin.include_tasks: proxmox/regular_master.yml
+          when: not use_vagrant
+
+        - name: Include task for Vagrant regular master
+          tags:
+            - vagrant
+          ansible.builtin.include_tasks: vagrant/regular_master.yml
+          when: use_vagrant
+      rescue:
+        - name: K3S installation failed on master server
+          tags:
+            - error_handling
+            - with_debug
+          ansible.builtin.debug:
+            msg: "{{ reg_k3s_master.stderr_lines }}"
+          notify: "remove_tmp"
+      when: inventory_hostname in groups['servers'][1]
+
+    - name: Install K3s | Run install script on agents
+      tags:
+        - k3s
+        - install
+        - agents
+        - include_tasks
+      block:
+        - name: Include task for Proxmox agents
+          tags:
+            - proxmox
+          ansible.builtin.include_tasks: proxmox/agents.yml
+          when: not use_vagrant
+
+        - name: Include task for Vagrant agents
+          tags:
+            - vagrant
+          ansible.builtin.include_tasks: vagrant/agents.yml
+          when: use_vagrant
+      when:
+        - inventory_hostname in groups['agents']
+
+    - name: Install K3s | Verify installation
+      tags:
+        - verify
+        - with_command
+      ansible.builtin.command: k3s --version
+      register: k3s_ver
+
+    - name: Install K3s | Output version
+      tags:
+        - verify
+        - with_debug
+      ansible.builtin.debug:
+        msg: "Successfully installed version: {{ k3s_ver.stdout }}"
+  notify: "remove_tmp"
