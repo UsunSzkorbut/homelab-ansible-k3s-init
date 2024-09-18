@@ -46,8 +46,7 @@
         url: https://get.k3s.io
         dest: "{{ k3s.path.install }}"
         mode: '0755'
-#--node-taint CriticalAddonsOnly=true:NoExecute
-#--node-taint node-role.kubernetes.io/master=true:NoSchedule
+
     - name: Install K3s | Run install script on tainted master
       tags:
         - k3s
@@ -57,7 +56,12 @@
       ansible.builtin.shell: >
         INSTALL_K3S_VERSION={{ k3s.version }}
         K3S_KUBECONFIG_MODE="644"
-        INSTALL_K3S_EXEC="--cluster-init --disable servicelb --disable traefik --node-taint node-role.kubernetes.io/master=true:NoSchedule"
+        INSTALL_K3S_EXEC="--cluster-init
+        --disable servicelb
+        --disable traefik
+        --node-taint node-role.kubernetes.io/master=true:NoSchedule
+        --node-ip {{ hostvars[inventory_hostname].ansible_eth1.ipv4.address }}
+        --flannel-iface eth1"
         {{ k3s.path.install }}
       args:
         creates: "{{ k3s.path.bin }}"
@@ -97,7 +101,10 @@
         ansible.builtin.shell: >
           INSTALL_K3S_VERSION={{ k3s.version }}
           K3S_KUBECONFIG_MODE="644"
-          INSTALL_K3S_EXEC="server --disable traefik"
+          INSTALL_K3S_EXEC="server
+          --disable traefik
+          --node-ip {{ hostvars[inventory_hostname].ansible_eth1.ipv4.address }}
+          --flannel-iface eth1"
           K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_eth1.ipv4.address }}:6443
           K3S_TOKEN={{ hostvars['localhost'].k3s_token }}
           {{ k3s.path.install }}
@@ -120,9 +127,11 @@
         - install
         - agents
         - with_shell
-      ansible.builtin.shell:
+      ansible.builtin.shell: >
         INSTALL_K3S_VERSION={{ k3s.version }}
-        INSTALL_K3S_EXEC="agent"
+        INSTALL_K3S_EXEC="agent
+        --node-ip {{ hostvars[inventory_hostname].ansible_eth1.ipv4.address }}
+        --flannel-iface eth1"
         K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_eth1.ipv4.address }}:6443
         K3S_TOKEN={{ hostvars['localhost'].k3s_token }}
         {{ k3s.path.install }}
