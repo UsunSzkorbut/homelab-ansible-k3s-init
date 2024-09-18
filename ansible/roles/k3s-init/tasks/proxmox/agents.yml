@@ -1,0 +1,15 @@
+---
+- name: Install K3s | Run install script on agents | Proxmox
+  tags:
+    - k3s
+    - install
+    - agents
+    - with_shell
+  ansible.builtin.shell: >
+    INSTALL_K3S_VERSION={{ k3s.version }}
+    INSTALL_K3S_EXEC="agent"
+    K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_default_ipv4.address }}:6443
+    K3S_TOKEN={{ hostvars['localhost'].k3s_token }}
+    {{ k3s.path.install }}
+  args:
+    creates: "{{ k3s.path.bin }}"
