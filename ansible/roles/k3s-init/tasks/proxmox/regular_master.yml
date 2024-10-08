@@ -28,6 +28,15 @@
       ansible.builtin.debug:
         msg: "{{ reg_k3s_regular_master.stderr_lines }}"
 
+    - name: ERROR | Run install script on regular master | Attempt restarting service
+      tags:
+        - error_handling
+        - with_module
+      ansible.builtin.systemd_service:
+        name: k3s
+        state: restarted
+      register: k3s_rm_service_status
+
     - name: ERROR | Run install script on regular master | Uninstall remaining K3s files
       tags:
         - error_handling
@@ -35,6 +44,7 @@
       ansible.builtin.shell: "{{ k3s.path.server_uninstall_bin }}"
       args:
         removes: "{{ k3s.path.bin }}"
+      when: k3s_rm_service_status.state != "started"
 
   always:
     - name: Install K3s | Verify K3s installation on regular master
