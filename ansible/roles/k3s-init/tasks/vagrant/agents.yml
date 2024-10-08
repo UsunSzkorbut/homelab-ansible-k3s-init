@@ -28,6 +28,15 @@
       ansible.builtin.debug:
         msg: "{{ reg_k3s_agent.stderr_lines }}"
 
+    - name: ERROR | Run install script on agents | Attempt restarting service
+      tags:
+        - error_handling
+        - with_module
+      ansible.builtin.systemd_service:
+        name: k3s
+        state: restarted
+      register: k3s_ag_service_status
+
     - name: ERROR | Run install script on agents | Uninstall remaining K3s files
       tags:
         - error_handling
@@ -35,6 +44,7 @@
       ansible.builtin.shell: "{{ k3s.path.agents_uninstall_bin }}"
       args:
         removes: "{{ k3s.path.bin }}"
+      when: k3s_ag_service_status.state != "started"
 
   always:
     - name: Install K3s | Verify K3s installation on agent
