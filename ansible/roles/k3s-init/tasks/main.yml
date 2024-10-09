@@ -10,8 +10,8 @@
         name:
           - python3-pip
           - nfs-common
-      register: apt_install_result
-      until: apt_install_result is succeeded
+      register: reg_apt_install_result
+      until: reg_apt_install_result is succeeded
       retries: 5
       delay: 30
 
@@ -42,12 +42,7 @@
         - with_debug
       ansible.builtin.debug:
         msg: "Prepare pre-requisites failed. Check the logs for further information."
-
-    - name: ERROR | Prepare pre-requisites | Rollback directory changes
-      tags:
-        - error_handling
-        - with_meta
-      ansible.builtin.meta: flush_handlers
+      notify: "remove_tmp"
 
 - name: Install K3s
   block:
@@ -60,8 +55,8 @@
         url: https://get.k3s.io
         dest: "{{ k3s.path.install }}"
         mode: '0755'
-      register: k3s_download_result
-      failed_when: k3s_download_result.status_code != 200
+      register: reg_k3s_download_result
+      failed_when: reg_k3s_download_result.status_code != 200
 
     - name: Install K3s | Run install script on tainted master
       tags:
@@ -93,13 +88,13 @@
           tags:
             - with_shell
           ansible.builtin.shell: cat {{ k3s.path.node_token }} | tr -d " \t\n\r"
-          register: k3s_token_reg
+          register: reg_k3s_token
 
         - name: Delegate K3s API token | Delegate output to localhost
           tags:
             - with_module
           ansible.builtin.set_fact:
-            k3s_token: "{{ k3s_token_reg.stdout }}"
+            k3s_token: "{{ reg_k3s_token.stdout }}"
           run_once: true
           delegate_to: localhost
           delegate_facts: true
@@ -153,9 +148,4 @@
         - with_debug
       ansible.builtin.debug:
         msg: "K3s installation failed on node: {{ inventory_hostname }}. Check the logs for further information."
-
-    - name: ERROR | Install K3s | Rollback directory changes
-      tags:
-        - error_handling
-        - with_meta
-      ansible.builtin.meta: flush_handlers
+      notify: "remove_tmp"
