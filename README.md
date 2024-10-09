@@ -18,10 +18,10 @@ K3s cluster init with pre-installed components as:
 - [X] Provide support for installation on multiple VMs
 - [X] Pretasks for Vagrant boxes (updating repos)
 - [X] Implement Extra Node for HA
-- [ ] Implement error handling during the installation process
-    - [ ] Add registers for error handling
-- [ ] Optimize and tag Ansible
-- [ ] Update roles README
+- [X] Implement error handling during the installation process
+    - [X] Add registers for error handling
+- [X] Optimize and tag Ansible
+- [X] Update roles README
 #### Vagrant
 - [X] Vagrantfile plugin requirements handling
 

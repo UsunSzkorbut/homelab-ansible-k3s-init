@@ -10,8 +10,8 @@
         name:
           - python3-pip
           - nfs-common
-      register: apt_install_result
-      until: apt_install_result is succeeded
+      register: reg_apt_install_result
+      until: reg_apt_install_result is succeeded
       retries: 5
       delay: 30
 
@@ -35,6 +35,15 @@
         state: directory
         mode: '0755'
 
+  rescue:
+    - name: ERROR | Prepare pre-requisites | Notify about failure
+      tags:
+        - error_handling
+        - with_debug
+      ansible.builtin.debug:
+        msg: "Prepare pre-requisites failed. Check the logs for further information."
+      notify: "remove_tmp"
+
 - name: Install K3s
   block:
     - name: Install K3s | Download install script
@@ -46,6 +55,8 @@
         url: https://get.k3s.io
         dest: "{{ k3s.path.install }}"
         mode: '0755'
+      register: reg_k3s_download_result
+      failed_when: reg_k3s_download_result.status_code != 200
 
     - name: Install K3s | Run install script on tainted master
       tags:
@@ -77,13 +88,13 @@
           tags:
             - with_shell
           ansible.builtin.shell: cat {{ k3s.path.node_token }} | tr -d " \t\n\r"
-          register: k3s_token_reg
+          register: reg_k3s_token
 
         - name: Delegate K3s API token | Delegate output to localhost
           tags:
             - with_module
           ansible.builtin.set_fact:
-            k3s_token: "{{ k3s_token_reg.stdout }}"
+            k3s_token: "{{ reg_k3s_token.stdout }}"
           run_once: true
           delegate_to: localhost
           delegate_facts: true
@@ -107,14 +118,6 @@
             - vagrant
           ansible.builtin.include_tasks: vagrant/regular_master.yml
           when: use_vagrant
-      rescue:
-        - name: K3S installation failed on master server
-          tags:
-            - error_handling
-            - with_debug
-          ansible.builtin.debug:
-            msg: "{{ reg_k3s_master.stderr_lines }}"
-          notify: "remove_tmp"
       when: inventory_hostname in groups['servers'][1]
 
     - name: Install K3s | Run install script on agents
@@ -138,17 +141,11 @@
       when:
         - inventory_hostname in groups['agents']
 
-    - name: Install K3s | Verify installation
+  rescue:
+    - name: ERROR | Install K3s | Notify about failure
       tags:
-        - verify
-        - with_command
-      ansible.builtin.command: k3s --version
-      register: k3s_ver
-
-    - name: Install K3s | Output version
-      tags:
-        - verify
+        - error_handling
         - with_debug
       ansible.builtin.debug:
-        msg: "Successfully installed version: {{ k3s_ver.stdout }}"
-  notify: "remove_tmp"
+        msg: "K3s installation failed on node: {{ inventory_hostname }}. Check the logs for further information."
+      notify: "remove_tmp"

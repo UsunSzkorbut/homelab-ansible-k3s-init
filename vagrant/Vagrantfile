@@ -5,14 +5,11 @@ Vagrant.configure("2") do |config|
   # Global config
   config.vm.box = "bento/ubuntu-22.04"
   config.vm.synced_folder ".", "/vagrant", disabled: true
-  # Enable VirtualBox NAT DNS Proxy
-  config.vm.provider "virtualbox" do |v|
-    v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-  end
 
-if Vagrant.has_plugin?("vagrant-timezone")
-  config.timezone.value = :host
-end
+  # Timezone plugin configuration
+  if Vagrant.has_plugin?("vagrant-timezone")
+    config.timezone.value = :host
+  end
 
   # K3s Masters
   (1..2).each do |i|
@@ -21,14 +18,14 @@ end
 
       # VMware_desktop provider configuration for K3s Master
       master.vm.provider "vmware_desktop" do |v, override|
-        v.vmx["memsize"] = "4192"
+        v.vmx["memsize"] = "4096"
         v.vmx["numvcpus"] = "2"
         override.vm.network "public_network", bridge: true, ip: "10.0.0.1#{i}", auto_config: true
       end
 
       # VirtualBox provider configuration for K3s Master
       master.vm.provider "virtualbox" do |v, override|
-        v.memory = "4192"
+        v.memory = "4096"
         v.cpus = "2"
         v.linked_clone = true
         override.vm.network "private_network", ip: "10.0.0.1#{i}", auto_config: true

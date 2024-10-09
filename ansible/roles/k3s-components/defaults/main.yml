@@ -30,6 +30,11 @@ metallb:
     ipaddresses: "{{ tmp_dir }}/ipaddresses.yml"
     layer2: "{{ tmp_dir }}/layer2.yml"
 
+# Helm variables
+helm:
+  path:
+    bin: /usr/local/bin/helm
+
 # Cert Manager variables
 cert_manager:
   version: v1.15.2
@@ -38,6 +43,7 @@ cert_manager:
 
 #Nginx Ingress Controller variables
 nginx_ingress_controller:
+  version: v3.6.2
   path:
     creds: "{{ tmp_dir }}/crds.yaml"
 

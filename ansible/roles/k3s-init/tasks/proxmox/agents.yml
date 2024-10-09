@@ -1,15 +1,53 @@
 ---
-- name: Install K3s | Run install script on agents | Proxmox
-  tags:
-    - k3s
-    - install
-    - agents
-    - with_shell
-  ansible.builtin.shell: >
-    INSTALL_K3S_VERSION={{ k3s.version }}
-    INSTALL_K3S_EXEC="agent"
-    K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_default_ipv4.address }}:6443
-    K3S_TOKEN={{ hostvars['localhost'].k3s_token }}
-    {{ k3s.path.install }}
-  args:
-    creates: "{{ k3s.path.bin }}"
+- name: Included task for Proxmox agents
+  block:
+    - name: Install K3s | Run install script on agents | Proxmox
+      tags:
+        - k3s
+        - install
+        - agents
+        - with_shell
+      ansible.builtin.shell: >
+        INSTALL_K3S_VERSION={{ k3s.version }}
+        INSTALL_K3S_EXEC="agent"
+        K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_default_ipv4.address }}:6443
+        K3S_TOKEN={{ hostvars['localhost'].k3s_token }}
+        {{ k3s.path.install }}
+      args:
+        creates: "{{ k3s.path.bin }}"
+      register: reg_k3s_agent
+      notify: "remove_tmp"
+
+  rescue:
+    - name: ERROR | Run install script on agents | Display error lines
+      tags:
+        - error_handling
+        - with_debug
+      ansible.builtin.debug:
+        msg: "{{ reg_k3s_agent.stderr_lines }}"
+
+    - name: ERROR | Run install script on agents | Attempt restarting service
+      tags:
+        - error_handling
+        - with_module
+      ansible.builtin.systemd_service:
+        name: k3s
+        state: restarted
+      register: reg_k3s_ag_service_status
+
+    - name: ERROR | Run install script on agents | Uninstall remaining K3s files
+      tags:
+        - error_handling
+        - with_shell
+      ansible.builtin.shell: "{{ k3s.path.agents_uninstall_bin }}"
+      args:
+        removes: "{{ k3s.path.bin }}"
+      when: reg_k3s_ag_service_status.state != "started"
+
+  always:
+    - name: Install K3s | Verify K3s installation on agent
+      tags:
+        - verify
+        - with_debug
+      ansible.builtin.debug:
+        msg: "{{ reg_k3s_agent.stdout_lines }}"

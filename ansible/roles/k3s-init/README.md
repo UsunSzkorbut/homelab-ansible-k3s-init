@@ -12,9 +12,10 @@ Role Variables
 --------------
 
 Default variables defined as follows:
+- `use_vagrant` &mdash; variable specifying usage of Vagrant (*false* by default).
 - `tmp_dir` &mdash; temporary directory path for installation script.
 - `k3s` &mdash; set of nested variables for K3s installation such as:
-    - `path` &mdash; including paths for installed binary (`bin`), installation script (`install`) and API token (`node_token`).
+    - `path` &mdash; including paths for installed binary, installation script, API token and uninstallation scripts.
     - `version` &mdash; release version of Kubernetes.
 
 ❗ **NOTE:** Role requires at least one host defined in inventory groups, respectively: `server` and `agents`.
@@ -40,6 +41,7 @@ Example Playbook
 License
 -------
 
+GPL-3.0
 
 Author Information
 ------------------

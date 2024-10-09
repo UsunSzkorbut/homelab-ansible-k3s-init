@@ -1,34 +1,51 @@
 ---
-- name: Prepare pre-requisites | Create temporary directory
+- name: Prepare pre-requisites
   tags:
-    - prereq
-    - with_module
-  ansible.builtin.file:
-    path: "{{ tmp_dir }}"
-    state: directory
-    mode: '0755'
-
-- name: Kube.conf
-  tags:
-    - k3s
     - prereq
   block:
-    - name: Kube.conf | Creating .kube directory
+    - name: Prepare pre-requisites | Create temporary directory
       tags:
+        - with_module
+      ansible.builtin.file:
+        path: "{{ tmp_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Prepare pre-requisites | Creating .kube directory
+      tags:
+        - k3s
         - with_module
       ansible.builtin.file:
         path: "{{ kube_dir_path }}"
         state: directory
         mode: '0644'
 
-    - name: Kube.conf | Coping k3s.yaml into .kube directory
+    - name: Prepare pre-requisites | Coping k3s.yaml into .kube directory
       tags:
+        - k3s
         - with_module
       ansible.builtin.copy:
         src: "{{ k3s.path.conf_src }}"
         remote_src: yes
         dest: "{{ kube_dir_path }}/config"
         mode: '0400'
+
+  rescue:
+    - name: ERROR | Prepare pre-requisites | Notify about failure
+      tags:
+        - error_handling
+        - with_debug
+      ansible.builtin.debug:
+        msg: "Prepare pre-requisites failed. Check the logs for further information."
+
+    - name: ERROR | Prepare pre-requisites | Rollback .kube directory changes
+      tags:
+        - error_handling
+        - with_module
+      ansible.builtin.file:
+        path: "{{ kube_dir_path }}"
+        state: absent
+      notify: "remove_tmp"
 
 - name: Metallb
   tags:
@@ -88,6 +105,15 @@
         state: present
         src: "{{ metallb.path.layer2 }}"
 
+  rescue:
+    - name: ERROR | Metallb | Notify about failure
+      tags:
+        - error_handling
+        - with_debug
+      ansible.builtin.debug:
+        msg: "Metallb deployment failed. Check the logs for further information."
+      notify: "remove_tmp"
+
 - name: Install Helm
   tags:
     - helm
@@ -97,22 +123,26 @@
         - install
         - with_shell
       ansible.builtin.shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-      register: helm_install
+      args:
+        creates: "{{ helm.path.bin }}"
+      register: reg_helm_install
 
-    - name: Install Helm | Display Helm installation output
+  rescue:
+    - name: ERROR | Install Helm | Display error lines
+      tags:
+        - error_handling
+        - with_debug
+      ansible.builtin.debug:
+        msg: "{{ reg_helm_install.stderr_lines }}"
+      notify: "remove_tmp"
+
+  always:
+    - name: Install Helm | Verify Helm installation
       tags:
         - verify
         - with_debug
       ansible.builtin.debug:
-        var: helm_install.stdout_lines
-
-    - name: Add Helm repository | Longhorn
-      tags:
-        - longhorn
-        - with_kubernetes_core
-      kubernetes.core.helm_repository:
-        name: longhorn
-        repo_url: https://charts.longhorn.io
+        msg: "{{ reg_helm_install.stdout_lines }}"
 
 - name: Add Helm Repository
   tags:
@@ -129,10 +159,27 @@
     - name: Add Helm repository | Cert-manager
       tags:
         - cert_manager
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.helm_repository:
         name: jetstack
         repo_url: https://charts.jetstack.io
+
+    - name: Add Helm repository | Longhorn
+      tags:
+        - longhorn
+        - with_kubernetes_core
+      kubernetes.core.helm_repository:
+        name: longhorn
+        repo_url: https://charts.longhorn.io
+
+  rescue:
+    - name: ERROR | Add Helm repository | Notify about failure
+      tags:
+        - error_handling
+        - with_debug
+      ansible.builtin.debug:
+        msg: "Adding Helm repositories failed. Check the logs for further information."
+      notify: "remove_tmp"
 
 - name: Nginx Ingress Controller
   tags:
@@ -143,13 +190,13 @@
         - download
         - with_module
       ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.6.2/deploy/crds.yaml
+        url: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/{{ nginx_ingress_controller.version }}/deploy/crds.yaml
         dest: "{{ nginx_ingress_controller.path.creds }}"
         mode: '0664'
 
     - name: Nginx Ingress Controller | Apply CustomResourceDefinitions manifest to the cluster
       tags:
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.k8s:
         state: present
         src: "{{ nginx_ingress_controller.path.creds }}"
@@ -158,7 +205,7 @@
       tags:
         - helm
         - install
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.helm:
         name: nginx-ingress
         chart_ref: oci://ghcr.io/nginxinc/charts/nginx-ingress
@@ -168,13 +215,22 @@
 
     - name: Nginx Ingress Controller | Wait till the deployment is ready
       tags:
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
         namespace: "{{ cluster_ns.nginx }}"
         wait_sleep: 10
         wait_timeout: 360
+
+  rescue:
+  - name: ERROR | Nginx Ingress Controller | Notify about failure
+    tags:
+      - error_handling
+      - with_debug
+    ansible.builtin.debug:
+      msg: "Configuring Nginx Ingress Controller failed. Check the logs for further information."
+    notify: "remove_tmp"
 
 - name: Cert-manager
   tags:
@@ -191,7 +247,7 @@
 
     - name: Cert-manager | Apply CustomResourceDefinitions manifest to the cluster
       tags:
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.k8s:
         state: present
         src: "{{ cert_manager.path.creds }}"
@@ -200,7 +256,7 @@
       tags:
         - helm
         - install
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.helm:
         name: cert-manager
         chart_ref: jetstack/cert-manager
@@ -210,13 +266,22 @@
 
     - name: Cert-manager | Wait till the deployment is ready
       tags:
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
         namespace: "{{ cluster_ns.cert }}"
         wait_sleep: 10
         wait_timeout: 360
+
+  rescue:
+  - name: ERROR | Cert-manager | Notify about failure
+    tags:
+      - error_handling
+      - with_debug
+    ansible.builtin.debug:
+      msg: "Configuring Cert-manager failed. Check the logs for further information."
+    notify: "remove_tmp"
 
 - name: Rancher
   tags:
@@ -242,7 +307,7 @@
 
     - name: Rancher | Wait till the deployment is ready
       tags:
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
@@ -254,7 +319,7 @@
       tags:
         - nginx
         - json_patch
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.k8s_json_patch:
         namespace: "{{ cluster_ns.rancher }}"
         kind: Ingress
@@ -264,6 +329,15 @@
             path: /spec/ingressClassName
             value: "nginx"
 
+  rescue:
+  - name: ERROR | Rancher | Notify about failure
+    tags:
+      - error_handling
+      - with_debug
+    ansible.builtin.debug:
+      msg: "Rancher deployment failed. Check the logs for further information."
+    notify: "remove_tmp"
+
 - name: Longhorn
   tags:
     - longhorn
@@ -272,7 +346,7 @@
       tags:
         - helm
         - install
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.helm:
         name: longhorn
         chart_ref: longhorn/longhorn
@@ -282,7 +356,7 @@
 
     - name: Longhorn | Wait till the deployment is ready
       tags:
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
@@ -293,7 +367,7 @@
     - name: Longhorn | Unset StorageClass local-path "default"
       tags:
         - json_patch
-        - with_kuberenetes_core
+        - with_kubernetes_core
       kubernetes.core.k8s_json_patch:
         api_version: storage.k8s.io/v1
         kind: StorageClass
@@ -302,4 +376,13 @@
           - op: replace
             path: /metadata/annotations/storageclass.kubernetes.io~1is-default-class
             value: "false"
-  notify: "remove_tmp"
+      notify: "remove_tmp"
+
+  rescue:
+  - name: ERROR | Longhorn | Notify about failure
+    tags:
+      - error_handling
+      - with_debug
+    ansible.builtin.debug:
+      msg: "Longhorn deployment failed. Check the logs for further information."
+    notify: "remove_tmp"

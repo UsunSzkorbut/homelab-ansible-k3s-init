@@ -2,19 +2,18 @@
 - name: K3s Server and Agents Install
   hosts: all
   become: true
-  vars:
-    use_vagrant: false
+  tags: k3s-init
   pre_tasks:
     - name: Update repositories
       ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 3600
-      when: use_vagrant
   roles:
     - k3s-init
 
 - name: K3s Components Install
   hosts: k3s-master-01
   become: true
+  tags: k3s-components
   roles:
     - k3s-components

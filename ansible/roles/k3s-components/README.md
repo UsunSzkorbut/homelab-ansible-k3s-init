@@ -5,6 +5,7 @@ An Ansible Role that installs and initializes components:
 - Metallb
 - Helm
 - Cert-Manager
+- Nginx-Ingress Controller
 - RancherOrchiestrator
 - Longhorn
 
@@ -17,12 +18,14 @@ Role Variables
 --------------
 
 Default variables defined as follows:
-- `tmp_dir` &mdash; temporary directory path for installation script.
-- `kube_dir_path` &mdash; path for `kube.conf`.
+- `tmp_dir` &mdash; temporary directory path for installation scripts.
+- `kube_dir_path` &mdash; path to K3s configuration directory.
 - `cluster_ns` &mdash; set of variables for cluster namespaces.
-- `k3s.path.conf_src` &mdash; set of nested variables for K3s.
-- `metallb` &mdash; set of nested variables for Metallb.
+- `k3s.path.conf_src` &mdash; path to `k3s.yaml` file.
+- `metallb` &mdash; set of nested variables for Metallb (e.g. `version`).
+- `helm.path.bin` &mdash; path to installed Helm binary.
 - `cert_manager` &mdash; set of nested variables for Cert-Manager.
+- `nginx_ingress_controller` &mdash; set of nested variables for Nginx-Ingress controller.
 - `rancher` &mdash; set of nested variables for Rancher.
 - `longhorn` &mdash; set of nested variables for Longhorn.
 
@@ -52,6 +55,7 @@ Including an example of how to use your role (for instance, with variables passe
 License
 -------
 
+GPL-3.0
 
 Author Information
 ------------------
