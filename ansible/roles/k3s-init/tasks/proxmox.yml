@@ -46,8 +46,7 @@
         url: https://get.k3s.io
         dest: "{{ k3s.path.install }}"
         mode: '0755'
-#--node-taint CriticalAddonsOnly=true:NoExecute
-#--node-taint node-role.kubernetes.io/master=true:NoSchedule
+
     - name: Install K3s | Run install script on master01
       tags:
         - k3s
