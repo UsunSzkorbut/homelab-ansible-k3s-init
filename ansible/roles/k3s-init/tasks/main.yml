@@ -12,7 +12,7 @@
           - nfs-common
       register: reg_apt_install_result
       until: reg_apt_install_result is succeeded
-      retries: 5
+      retries: 10
       delay: 30
 
     - name: Prepare pre-requisites | Install Python3-REQ
@@ -58,31 +58,31 @@
       register: reg_k3s_download_result
       failed_when: reg_k3s_download_result.status_code != 200
 
-    - name: Install K3s | Run install script on tainted master
+    - name: Install K3s | Run install script on deployer master
       tags:
         - k3s
         - install
-        - tainted_master
+        - deployer_master
         - include_tasks
       block:
-        - name: Include task for Proxmox tainted master
+        - name: Include task for Proxmox deployer master
           tags:
             - proxmox
-          ansible.builtin.include_tasks: proxmox/tainted_master.yml
+          ansible.builtin.include_tasks: proxmox/deployer_master.yml
           when: not use_vagrant
 
-        - name: Include task for Vagrant tainted master
+        - name: Include task for Vagrant deployer master
           tags:
             - vagrant
-          ansible.builtin.include_tasks: vagrant/tainted_master.yml
+          ansible.builtin.include_tasks: vagrant/deployer_master.yml
           when: use_vagrant
-      when: inventory_hostname in groups['servers'][0]
+      when: inventory_hostname in groups['deployer']
 
     - name: Delegate K3s API token
       tags:
         - k3s
         - token_delegation
-        - tainted_master
+        - deployer_master
       block:
         - name: Delegate K3s API token | Save file output to register
           tags:
@@ -98,9 +98,9 @@
           run_once: true
           delegate_to: localhost
           delegate_facts: true
-      when: inventory_hostname in groups['servers'][0]
+      when: inventory_hostname in groups['deployer']
 
-    - name: Install K3s | Run install script on master server
+    - name: Install K3s | Run install script on master servers
       tags:
         - k3s
         - install
@@ -118,7 +118,7 @@
             - vagrant
           ansible.builtin.include_tasks: vagrant/regular_master.yml
           when: use_vagrant
-      when: inventory_hostname in groups['servers'][1]
+      when: inventory_hostname in groups['servers']
 
     - name: Install K3s | Run install script on agents
       tags:
