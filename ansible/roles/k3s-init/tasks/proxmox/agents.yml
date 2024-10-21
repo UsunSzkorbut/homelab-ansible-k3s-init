@@ -10,7 +10,7 @@
       ansible.builtin.shell: >
         INSTALL_K3S_VERSION={{ k3s.version }}
         INSTALL_K3S_EXEC="agent"
-        K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_default_ipv4.address }}:6443
+        K3S_URL=https://{{ hostvars['k3s-master-01-deployer'].ansible_default_ipv4.address }}:6443
         K3S_TOKEN={{ hostvars['localhost'].k3s_token }}
         {{ k3s.path.install }}
       args:
