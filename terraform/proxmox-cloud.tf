@@ -1,7 +1,7 @@
 resource "proxmox_vm_qemu" "cloud-k3s-master" {
     target_node = "homelab"
     desc = "Cloud Ubuntu 22.04"
-    count = 2
+    count = 3
     onboot = true
 
     clone = "ubuntu-cloud"
@@ -46,7 +46,7 @@ resource "proxmox_vm_qemu" "cloud-k3s-master" {
 resource "proxmox_vm_qemu" "cloud-k3s-worker" {
     target_node = "homelab"
     desc = "Cloud Ubuntu 22.04"
-    count = 2
+    count = 1
     onboot = true
 
     clone = "ubuntu-cloud"
