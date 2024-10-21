@@ -185,41 +185,66 @@
   tags:
     - nginx
   block:
+    - name: Nginx Ingress Controller | Git clone branch
+      ansible.builtin.git:
+        repo: https://github.com/nginxinc/kubernetes-ingress.git
+        dest: "{{ nginxingresscontroller.path.install }}"
+        single_branch: yes
+        version: "{{ nginxingresscontroller.version }}"
+
+    - name: Nginx Ingress Controller | Apply Namespace and Service Account manifest to the cluster
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ nginxingresscontroller.path['ns-and-sa'] }}"
+
+    - name: Nginx Ingress Controller | Apply rbac manifest to the cluster
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ nginxingresscontroller.path.rbac }}"
+
+    - name: Nginx Ingress Controller | Apply nginx-config-map manifest to the cluster
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ nginxingresscontroller.path['nginx-config'] }}"
+
+    - name: Nginx Ingress Controller | Apply ingress-class manifest to the cluster
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ nginxingresscontroller.path['ingress-class'] }}"
+
     - name: Nginx Ingress Controller | Download CustomResourceDefinitions manifest
       tags:
         - download
         - with_module
       ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/{{ nginx_ingress_controller.version }}/deploy/crds.yaml
-        dest: "{{ nginx_ingress_controller.path.creds }}"
+        url: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.7.0/deploy/crds.yaml
+        dest: "{{ nginxingresscontroller.path.crds }}"
         mode: '0664'
 
     - name: Nginx Ingress Controller | Apply CustomResourceDefinitions manifest to the cluster
       tags:
-        - with_kubernetes_core
+        - with_kuberenetes_core
       kubernetes.core.k8s:
         state: present
-        src: "{{ nginx_ingress_controller.path.creds }}"
+        src: "{{ nginxingresscontroller.path.crds }}"
 
-    - name: Install NGINX Ingress using Helm
-      tags:
-        - helm
-        - install
-        - with_kubernetes_core
-      kubernetes.core.helm:
-        name: nginx-ingress
-        chart_ref: oci://ghcr.io/nginxinc/charts/nginx-ingress
-        chart_version: "1.3.2"
-        release_namespace: "{{ cluster_ns.nginx }}"
-        create_namespace: true
+    - name: Nginx Ingress Controller | Apply nginx-ingress manifest to the cluster
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ nginxingresscontroller.path['nginx-ingress'] }}"
+
+    - name: Nginx Ingress Controller | Apply nginx-ingress manifest to the cluster
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ nginxingresscontroller.path.loadbalancer }}"
 
     - name: Nginx Ingress Controller | Wait till the deployment is ready
       tags:
-        - with_kubernetes_core
+        - with_kuberenetes_core
       kubernetes.core.k8s_info:
         kind: Deployment
         wait: yes
-        namespace: "{{ cluster_ns.nginx }}"
+        namespace: nginx-ingress
         wait_sleep: 10
         wait_timeout: 360
 
@@ -283,6 +308,97 @@
       msg: "Configuring Cert-manager failed. Check the logs for further information."
     notify: "remove_tmp"
 
+- name: External-DNS for PiHole
+  block:
+    - name: External-DNS | Creating Namespace
+      kubernetes.core.k8s:
+        name: "{{ cluster_ns.externaldns }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: External-DNS | Creating Secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: pihole-password
+            namespace: "{{ cluster_ns.externaldns }}"
+          type: Opaque
+          data:
+            EXTERNAL_DNS_PIHOLE_PASSWORD: "{{ externaldns.piholepassword | b64encode }}"
+
+    - name: External-DNS | Create Depoloyment manifest
+      ansible.builtin.template:
+        src: externaldns.yml.j2
+        dest: "{{ externaldns.path.manifest }}"
+
+    - name: External-DNS | Apply Depoloyment manifest | Default replicas 0
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ externaldns.path.manifest }}"
+
+- name: Longhorn
+  tags:
+    - longhorn
+  block:
+    - name: Longhorn | Install using Helm
+      tags:
+        - helm
+        - install
+        - with_kuberenetes_core
+      kubernetes.core.helm:
+        name: longhorn
+        chart_ref: longhorn/longhorn
+        chart_version: "{{ longhorn.version }}"
+        release_namespace: "{{ cluster_ns.longhorn }}"
+        create_namespace: true
+        values:
+          persistence:
+            defaultClassReplicaCount: 2
+            defaultDataLocality: best-effort
+          csi:
+            attacherReplicaCount: 1
+            provisionerReplicaCount: 1
+            resizerReplicaCount: 1
+            snapshotterReplicaCount: 1
+          longhornUI:
+            replicas: 0
+
+    - name: Longhorn | Wait till the deployment is ready
+      tags:
+        - with_kuberenetes_core
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        wait: yes
+        namespace: "{{ cluster_ns.longhorn }}"
+        wait_sleep: 10
+        wait_timeout: 360
+
+    - name: Longhorn | Unset StorageClass local-path "default"
+      tags:
+        - json_patch
+        - with_kuberenetes_core
+      kubernetes.core.k8s_json_patch:
+        api_version: storage.k8s.io/v1
+        kind: StorageClass
+        name: local-path
+        patch:
+          - op: replace
+            path: /metadata/annotations/storageclass.kubernetes.io~1is-default-class
+            value: "false"
+            
+  rescue:
+  - name: ERROR | Longhorn | Notify about failure
+    tags:
+      - error_handling
+      - with_debug
+    ansible.builtin.debug:
+      msg: "Longhorn deployment failed. Check the logs for further information."
+    notify: "remove_tmp"
+
 - name: Rancher
   tags:
     - rancher
@@ -336,53 +452,4 @@
       - with_debug
     ansible.builtin.debug:
       msg: "Rancher deployment failed. Check the logs for further information."
-    notify: "remove_tmp"
-
-- name: Longhorn
-  tags:
-    - longhorn
-  block:
-    - name: Longhorn | Install using Helm
-      tags:
-        - helm
-        - install
-        - with_kubernetes_core
-      kubernetes.core.helm:
-        name: longhorn
-        chart_ref: longhorn/longhorn
-        chart_version: "{{ longhorn.version }}"
-        release_namespace: "{{ cluster_ns.longhorn }}"
-        create_namespace: true
-
-    - name: Longhorn | Wait till the deployment is ready
-      tags:
-        - with_kubernetes_core
-      kubernetes.core.k8s_info:
-        kind: Deployment
-        wait: yes
-        namespace: "{{ cluster_ns.longhorn }}"
-        wait_sleep: 10
-        wait_timeout: 360
-
-    - name: Longhorn | Unset StorageClass local-path "default"
-      tags:
-        - json_patch
-        - with_kubernetes_core
-      kubernetes.core.k8s_json_patch:
-        api_version: storage.k8s.io/v1
-        kind: StorageClass
-        name: local-path
-        patch:
-          - op: replace
-            path: /metadata/annotations/storageclass.kubernetes.io~1is-default-class
-            value: "false"
-      notify: "remove_tmp"
-
-  rescue:
-  - name: ERROR | Longhorn | Notify about failure
-    tags:
-      - error_handling
-      - with_debug
-    ansible.builtin.debug:
-      msg: "Longhorn deployment failed. Check the logs for further information."
     notify: "remove_tmp"
