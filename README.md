@@ -2,7 +2,7 @@
 
 K3s cluster init with pre-installed components as:
  - **Metallb**
- - **Helm support** / Avaible only on Deployer node
+ - **Helm support** / Available only on Deployer node
  - **Cert-Manager**
  - **Nginx Ingress Controller** / Traefik disabled
  - **External-DNS for PiHole** / Default Replicas 0 for deployment
@@ -14,10 +14,14 @@ K3s cluster init with pre-installed components as:
 - [ ] Add
 #### Ansible
 - [ ] Update tags
-- [ ] Update ansible variables - Rancher
+- [ ] Clean up path variables
+- [ ] Improve Nginx-Ingress and Rancher error handling
+- [ ] Add error handling for External-DNS
+- [ ] Rename registers and task names for deprecated tainted master
+- [X] Update ansible variables - Rancher
 - [ ] Update roles README
 #### Vagrant
-- [ ] Update Vagrantfile
+- [X] Update Vagrantfile
 
 ## Environment specification
 
