@@ -1,6 +1,9 @@
 ---
 # defaults file for k3s-components
 
+# Specify installation of RancherOrchestrator
+install_rancher: false
+
 # temporary directory (marked for removal)
 tmp_dir: /tmp/k3s-components
 
@@ -41,7 +44,7 @@ cert_manager:
   path:
     creds: "{{ tmp_dir }}/cert-manager.crds.yaml"
 
-#Nginx Ingress Controller variables
+# Nginx Ingress Controller variables
 nginxingresscontroller:
   version: v3.7.0
   path:
@@ -54,7 +57,7 @@ nginxingresscontroller:
     nginx-ingress: "{{ tmp_dir }}/kubernetes-ingress/deployments/deployment/nginx-ingress.yaml"
     loadbalancer: "{{ tmp_dir }}/kubernetes-ingress/deployments/service/loadbalancer.yaml"
     
-#External-DNS variables
+# External-DNS variables
 externaldns:
   piholepassword: supersecret
   piholeip: https://10.0.0.69

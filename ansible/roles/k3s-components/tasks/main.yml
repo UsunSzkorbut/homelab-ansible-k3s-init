@@ -185,7 +185,7 @@
   tags:
     - nginx
   block:
-    - name: Nginx Ingress Controller | Git clone branch
+    - name: Nginx Ingress Controller | Git clone branch # TODO fails here
       ansible.builtin.git:
         repo: https://github.com/nginxinc/kubernetes-ingress.git
         dest: "{{ nginxingresscontroller.path.install }}"
@@ -308,7 +308,7 @@
       msg: "Configuring Cert-manager failed. Check the logs for further information."
     notify: "remove_tmp"
 
-- name: External-DNS for PiHole
+- name: External-DNS for PiHole # TODO Add error handling for block
   block:
     - name: External-DNS | Creating Namespace
       kubernetes.core.k8s:
@@ -400,60 +400,58 @@
     notify: "remove_tmp"
 
 
-# TODO:
-# KRZYSZTOF: Add control var for Rancher
+- name: Rancher
+  tags:
+    - rancher
+  block:
+    - name: Rancher | Install using Helm # TODO fails here
+      tags:
+        - helm
+        - install
+        - with_kubernetes_core
+      kubernetes.core.helm:
+        name: rancher
+        chart_ref: rancher-latest/rancher
+        release_namespace: "{{ cluster_ns.rancher }}"
+        create_namespace: true
+        state: present
+        wait: true
+        set_values:
+          - value: hostname="{{ rancher.hostname }}"
+            value_type: string
+          - value: bootstrapPassword="{{ rancher.bootstrapPassword }}"
+            value_type: raw
 
-#- name: Rancher
-#  tags:
-#    - rancher
-#  block:
-#    - name: Rancher | Install using Helm
-#      tags:
-#        - helm
-#        - install
-#        - with_kubernetes_core
-#      kubernetes.core.helm:
-#        name: rancher
-#        chart_ref: rancher-latest/rancher
-#        release_namespace: "{{ cluster_ns.rancher }}"
-#        create_namespace: true
-#        state: present
-#        wait: true
-#        set_values:
-#          - value: hostname="{{ rancher.hostname }}"
-#            value_type: string
-#          - value: bootstrapPassword="{{ rancher.bootstrapPassword }}"
-#            value_type: raw
-#
-#    - name: Rancher | Wait till the deployment is ready
-#      tags:
-#        - with_kubernetes_core
-#      kubernetes.core.k8s_info:
-#        kind: Deployment
-#        wait: yes
-#        namespace: "{{ cluster_ns.rancher }}"
-#        wait_sleep: 10
-#        wait_timeout: 360
-#
-#    - name: Rancher | Apply JSON patch to add ingressClassName Nginx
-#      tags:
-#        - nginx
-#        - json_patch
-#        - with_kubernetes_core
-#      kubernetes.core.k8s_json_patch:
-#        namespace: "{{ cluster_ns.rancher }}"
-#        kind: Ingress
-#        name: rancher
-#        patch:
-#          - op: add
-#            path: /spec/ingressClassName
-#            value: "nginx"
-#
-#  rescue:
-#  - name: ERROR | Rancher | Notify about failure
-#    tags:
-#      - error_handling
-#      - with_debug
-#    ansible.builtin.debug:
-#      msg: "Rancher deployment failed. Check the logs for further information."
-#    notify: "remove_tmp"
+    - name: Rancher | Wait till the deployment is ready
+      tags:
+        - with_kubernetes_core
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        wait: yes
+        namespace: "{{ cluster_ns.rancher }}"
+        wait_sleep: 10
+        wait_timeout: 360
+
+    - name: Rancher | Apply JSON patch to add ingressClassName Nginx
+      tags:
+        - nginx
+        - json_patch
+        - with_kubernetes_core
+      kubernetes.core.k8s_json_patch:
+        namespace: "{{ cluster_ns.rancher }}"
+        kind: Ingress
+        name: rancher
+        patch:
+          - op: add
+            path: /spec/ingressClassName
+            value: "nginx"
+  when: install_rancher
+
+  rescue:
+  - name: ERROR | Rancher | Notify about failure
+    tags:
+      - error_handling
+      - with_debug
+    ansible.builtin.debug:
+      msg: "Rancher deployment failed. Check the logs for further information."
+    notify: "remove_tmp"
