@@ -12,7 +12,7 @@
     - k3s-init
 
 - name: K3s Components Install
-  hosts: k3s-master-01-deployer
+  hosts: deployer
   become: true
   tags: k3s-components
   roles:
