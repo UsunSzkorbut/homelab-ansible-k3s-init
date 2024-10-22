@@ -3,6 +3,8 @@
   hosts: all
   become: true
   tags: k3s-init
+  gather_timeout: 60
+  timeout: 600
   pre_tasks:
     - name: Update repositories
       ansible.builtin.apt:
