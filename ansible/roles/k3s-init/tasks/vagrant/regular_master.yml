@@ -1,7 +1,7 @@
 ---
 - name: Included task for Vagrant regular master
   block:
-    - name: Install K3s | Run install script on master server | Vagrant
+    - name: Install K3s | Run install script on regular master server | Vagrant
       tags:
         - k3s
         - install
@@ -14,7 +14,7 @@
         --disable traefik
         --node-ip {{ hostvars[inventory_hostname].ansible_eth1.ipv4.address }}
         --flannel-iface eth1"
-        K3S_URL=https://{{ hostvars['k3s-master-01'].ansible_eth1.ipv4.address }}:6443
+        K3S_URL=https://{{ hostvars['k3s-master-01-deployer'].ansible_eth1.ipv4.address }}:6443
         K3S_TOKEN={{ hostvars['localhost'].k3s_token }}
         {{ k3s.path.install }}
       args:
