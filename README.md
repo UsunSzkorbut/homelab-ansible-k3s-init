@@ -11,8 +11,13 @@ K3s cluster init with pre-installed components as:
 
 ## TODO:
 #### Kubernetes
-- [ ] Add
+- [ ] Add 
 #### Ansible
+- [ ] CRITICAL - Longhorn pre-req
+      sudo systemctl enable iscsid
+      sudo systemctl start iscsid
+      sudo systemctl stop multipathd
+      sudo systemctl disable multipathd
 - [ ] Update tags
 - [ ] Clean up path variables
 - [ ] Improve Nginx-Ingress and Rancher error handling
