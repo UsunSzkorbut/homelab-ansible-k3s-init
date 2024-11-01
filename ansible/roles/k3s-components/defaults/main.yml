@@ -1,30 +1,32 @@
 ---
-# defaults file for k3s-components
+# temporary directory (marked for removal)
+tmp_dir: /tmp/k3s-components
+# Helm variables
+helm:
+  path:
+    script: "{{ tmp_dir }}/get_helm.sh"
+
+
+
+###############################################################
+####################### K3S components ########################
+# Specify installation of longhorn
+install_longhorn: false
+
+# Specify installation of External-DNS for PiHole
+install_externaldns: false
 
 # Specify installation of RancherOrchestrator
 install_rancher: false
+###############################################################
+###############################################################
 
-# temporary directory (marked for removal)
-tmp_dir: /tmp/k3s-components
 
-# .Kube directory
-kube_dir_path: /root/.kube/
 
-# namespaces
-cluster_ns:
-  metallb: metallb-system
-  cert: cert-manager
-  rancher: cattle-system
-  longhorn: longhorn-system
-  externaldns: external-dns
-
-# K3s variables
-k3s:
-  path:
-    conf_src: /etc/rancher/k3s/k3s.yaml
-
+####################### K3S components variables ##############
 # Metallb variables
 metallb:
+  namespace: metallb
   version: v0.14.8
   ippool: 10.0.0.150-10.0.0.199
   pool_name: first-pool
@@ -33,13 +35,9 @@ metallb:
     ipaddresses: "{{ tmp_dir }}/ipaddresses.yml"
     layer2: "{{ tmp_dir }}/layer2.yml"
 
-# Helm variables
-helm:
-  path:
-    bin: /usr/local/bin/helm
-
 # Cert Manager variables
 cert_manager:
+  namespace: cert-manager
   version: v1.15.2
   path:
     creds: "{{ tmp_dir }}/cert-manager.crds.yaml"
@@ -59,16 +57,19 @@ nginxingresscontroller:
     
 # External-DNS variables
 externaldns:
+  namespace: external-dns
   piholepassword: supersecret
-  piholeip: https://10.0.0.69
+  piholeip: https://10.0.0.110
   path:
     manifest: "{{ tmp_dir }}/external-dns.yml"
 
 # Rancher variables
 rancher:
+  namespace: cattle-system
   hostname: rancher.homelab.local
   bootstrapPassword: admin
 
 # Longhorn variables
 longhorn:
+  namespace: longhorn-system
   version: 1.7.0
