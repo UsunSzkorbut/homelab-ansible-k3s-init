@@ -1,33 +1,38 @@
 # homelab-ansible-k3s-init
 
 K3s cluster init with pre-installed components as:
- - Metallb
- - Helm support / on master01
- - Cert-Manager
- - Nginx Ingress Controller / Traefik is not installed
- - RancherOrchiestrator
- - Longhorn / default storage-class driver
+ - **Metallb**
+ - **Helm support** / Available only on Deployer node
+ - **Cert-Manager**
+ - **Nginx Ingress Controller** / Traefik disabled
+ - **External-DNS for PiHole** / Default Replicas 0 for deployment
+ - **Longhorn** / Custom resources
+ - **RancherOrchiestrator** / not being installed by default
 
 ## TODO:
 #### Kubernetes
-- [X] Install Longhorn on the server (with supported pkg)
-- [X] Taint server - master01 node
-- [X] Install Nginx Ingress Controller
-- [X] Prepare Ingress for Rancher on basis of Nginx
+- [ ] Add 
 #### Ansible
-- [X] Provide support for installation on multiple VMs
-- [X] Pretasks for Vagrant boxes (updating repos)
-- [X] Implement Extra Node for HA
-- [X] Implement error handling during the installation process
-    - [X] Add registers for error handling
-- [X] Optimize and tag Ansible
-- [X] Update roles README
+- [ ] CRITICAL - Longhorn pre-req
+      sudo systemctl enable iscsid
+      sudo systemctl start iscsid
+      sudo systemctl stop multipathd
+      sudo systemctl disable multipathd
+- [ ] Update tags
+- [ ] Clean up path variables
+- [ ] Improve Nginx-Ingress and Rancher error handling
+- [ ] Add error handling for External-DNS
+- [ ] Rename registers and task names for deprecated tainted master
+- [X] Update ansible variables - Rancher
+- [ ] Update roles README
 #### Vagrant
-- [X] Vagrantfile plugin requirements handling
+- [X] Update Vagrantfile
 
 ## Environment specification
 
-✅ **Test Environment:** All components have been successfully tested on the cloud base image of **Ubuntu Server 22.04 LTS**.
+✅ **Test Environment:** All components have been successfully tested on the cloud base image of **Ubuntu Server 22.04 LTS**, All tasks are performed on debian derivatives - repo update, apt install, etc.
+
+❗ All tasks are performed on **Debian derivatives** - repo update, apt install, etc.
 
 ✅ **Deployment Server:** The deployment server has been configured using **WSL 2** with **Ubuntu 22.04 LTS** as the operating system.
 
@@ -44,28 +49,24 @@ qm set 5000 --boot c --bootdisk scsi0
 qm set 5000 --serial0 socket --vga serial0
 ```
 
-## Software requirements
-
+## Software requirements 
 | Software   | Version    |
 |:----------:|:----------:|
 | Proxmox    |     8      |
 | Ansible    |     Core 2.16.10       |
 | Terraform  |     v1.9.4       |
 
-## Cluster Topology
+## Recommended Cluster Topology 
 | Role       | Specification    | Hostname        |IP               |
-|:----------|:----------------|:---------------:|:---------------:|
-| master     | Workload NoSchedule  | k3s-master-01 |     10.0.0.11   |
-| master + agent     | Workload ready   | k3s-master-02 |     10.0.0.12   |
-| agent      | Workload ready   | k3s-worker-01 |     10.0.0.21   |
-| agent      | Workload ready   | k3s-worker-02 |     10.0.0.22   |
+|:-----------|:-----------------|:---------------:|:---------------:|
+| master     | Workload ready   | k3s-master-01 [K3S Deployer]  |     10.0.0.11   |
+| master     | Workload ready   | k3s-master-02   |     10.0.0.12   |
+| master     | Workload ready   | k3s-worker-01   |     10.0.0.21   |
+| agent      | Workload ready   | k3s-worker-02   |     10.0.0.22   |
 
-To balance high availability with limited resources, a 4-node cluster was set up, consisting of 2 master nodes and 2 worker nodes.
+To balance high availability with limited resources, a 4-node cluster was set up, consisting of 3 master nodes and 1 worker nodes.
 
-- **Master01** [k3s-master-01] serves as a dedicated control plane with an ETCD database. It ensures operational continuity in case of failure of the second master but is not configured to accept any new tasks.
-- **Master02** [k3s-master-02] has an identical configuration to Master 1 but is designed to accept and manage tasks alongside its control-plane responsibilities.
-
-This architecture ensures redundancy while maximizing resource efficiency.
+When installing a cluster using --cluster-init, ETCD is used instead of standard SQLite. The number of nodes supporting ETCD must be odd. In this case, to preserve the HA behavior of the cluster, the minimum number of control-nodes must be 3. This architecture ensures redundancy while maximizing resource efficiency.
 
 ### Installation
 Terraform Installation for Ubuntu 22.04 LTS:
@@ -91,7 +92,7 @@ terraform apply -auto-approve
 ```
 
 ### Run Ansible
-#### Proxmox hosts
+#### Proxmox hosts / Custom Provider
 ```bash
 cd ansible
 ansible-playbook -i inventories/proxmox playbook.yml

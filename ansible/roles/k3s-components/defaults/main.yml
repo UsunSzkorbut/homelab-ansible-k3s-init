@@ -1,27 +1,32 @@
 ---
-# defaults file for k3s-components
-
 # temporary directory (marked for removal)
 tmp_dir: /tmp/k3s-components
-
-# .Kube directory
-kube_dir_path: /root/.kube/
-
-# namespaces
-cluster_ns:
-  metallb: metallb-system
-  nginx: ingress-nginx
-  cert: cert-manager
-  rancher: cattle-system
-  longhorn: longhorn-system
-
-# K3s variables
-k3s:
+# Helm variables
+helm:
   path:
-    conf_src: /etc/rancher/k3s/k3s.yaml
+    script: "{{ tmp_dir }}/get_helm.sh"
 
+
+
+###############################################################
+####################### K3S components ########################
+# Specify installation of longhorn
+install_longhorn: true
+
+# Specify installation of External-DNS for PiHole
+install_externaldns: false
+
+# Specify installation of RancherOrchestrator
+install_rancher: false
+###############################################################
+###############################################################
+
+
+
+####################### K3S components variables ##############
 # Metallb variables
 metallb:
+  namespace: metallb-system
   version: v0.14.8
   ippool: 10.0.0.150-10.0.0.199
   pool_name: first-pool
@@ -30,28 +35,41 @@ metallb:
     ipaddresses: "{{ tmp_dir }}/ipaddresses.yml"
     layer2: "{{ tmp_dir }}/layer2.yml"
 
-# Helm variables
-helm:
-  path:
-    bin: /usr/local/bin/helm
-
 # Cert Manager variables
 cert_manager:
+  namespace: cert-manager
   version: v1.15.2
   path:
     creds: "{{ tmp_dir }}/cert-manager.crds.yaml"
 
-#Nginx Ingress Controller variables
-nginx_ingress_controller:
-  version: v3.6.2
+# Nginx Ingress Controller variables
+nginxingresscontroller:
+  version: v3.7.0
   path:
-    creds: "{{ tmp_dir }}/crds.yaml"
+    install: "{{ tmp_dir }}/kubernetes-ingress"
+    ns-and-sa: "{{ tmp_dir }}/kubernetes-ingress/deployments/common/ns-and-sa.yaml"
+    rbac: "{{ tmp_dir }}/kubernetes-ingress/deployments/rbac/rbac.yaml"
+    nginx-config: "{{ tmp_dir }}/kubernetes-ingress/deployments/common/nginx-config.yaml"
+    ingress-class: "{{ tmp_dir }}/kubernetes-ingress/deployments/common/ingress-class.yaml"
+    crds: "{{ tmp_dir }}/crds.yaml"
+    nginx-ingress: "{{ tmp_dir }}/kubernetes-ingress/deployments/deployment/nginx-ingress.yaml"
+    loadbalancer: "{{ tmp_dir }}/kubernetes-ingress/deployments/service/loadbalancer.yaml"
+    
+# External-DNS variables
+externaldns:
+  namespace: external-dns
+  piholepassword: supersecret
+  piholeip: https://10.0.0.110
+  path:
+    manifest: "{{ tmp_dir }}/external-dns.yml"
 
 # Rancher variables
 rancher:
+  namespace: cattle-system
   hostname: rancher.homelab.local
   bootstrapPassword: admin
 
 # Longhorn variables
 longhorn:
+  namespace: longhorn-system
   version: 1.7.0

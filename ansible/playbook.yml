@@ -1,8 +1,10 @@
 ---
-- name: K3s Server and Agents Install
+- name: K3s Cluster Install
   hosts: all
   become: true
   tags: k3s-init
+  gather_timeout: 60
+  timeout: 600
   pre_tasks:
     - name: Update repositories
       ansible.builtin.apt:
@@ -12,7 +14,7 @@
     - k3s-init
 
 - name: K3s Components Install
-  hosts: k3s-master-01
+  hosts: deployer
   become: true
   tags: k3s-components
   roles:

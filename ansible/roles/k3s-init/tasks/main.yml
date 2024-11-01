@@ -4,32 +4,64 @@
     - name: Prepare pre-requisites | Install apt packages
       tags:
         - prereq
-        - apt
-        - with_module
       ansible.builtin.apt:
         name:
           - python3-pip
           - nfs-common
       register: reg_apt_install_result
       until: reg_apt_install_result is succeeded
-      retries: 5
+      retries: 10
       delay: 30
 
     - name: Prepare pre-requisites | Install Python3-REQ
       tags:
         - prereq
-        - pip
-        - with_module
       ansible.builtin.pip:
         name:
           - pyyaml
           - kubernetes
           - jsonpatch
 
+    - name: Prepare pre-requisites | Enabled and start iscsid
+      tags:
+        - prereq
+      ansible.builtin.systemd:
+        name: iscsid
+        enabled: true
+        state: started
+
+    - name: Prepare pre-requisites | Disable and stop multipathd
+      tags:
+        - prereq
+      ansible.builtin.systemd:
+        name: multipathd
+        enabled: false
+        state: stopped
+
+    - name: Prepare pre-requisites | Load iscsid_tcp module into kernel
+      tags:
+        - prereq
+      ansible.builtin.modprobe:
+        name: iscsi_tcp
+        state: present
+
+    - name: Prepare pre-requisites | Load ext4 module into kernel
+      tags:
+        - prereq
+      ansible.builtin.modprobe:
+        name: ext4
+        state: present
+
+#    - name: Prepare pre-requisites | Load nvme-tcp module into kernel
+#      tags:
+#        - prereq
+#      ansible.builtin.modprobe:
+#        name: nvme-tcp
+#        state: present
+
     - name: Prepare pre-requisites | Create temporary directory
       tags:
         - prereq
-        - with_module
       ansible.builtin.file:
         path: "{{ tmp_dir }}"
         state: directory
@@ -39,7 +71,6 @@
     - name: ERROR | Prepare pre-requisites | Notify about failure
       tags:
         - error_handling
-        - with_debug
       ansible.builtin.debug:
         msg: "Prepare pre-requisites failed. Check the logs for further information."
       notify: "remove_tmp"
@@ -50,7 +81,6 @@
       tags:
         - k3s
         - download
-        - with_module
       ansible.builtin.get_url:
         url: https://get.k3s.io
         dest: "{{ k3s.path.install }}"
@@ -58,54 +88,46 @@
       register: reg_k3s_download_result
       failed_when: reg_k3s_download_result.status_code != 200
 
-    - name: Install K3s | Run install script on tainted master
+    - name: Install K3s | Run install script on deployer master
       tags:
         - k3s
-        - install
-        - tainted_master
-        - include_tasks
+        - deployer
       block:
-        - name: Include task for Proxmox tainted master
+        - name: Include task for Proxmox deployer master
           tags:
             - proxmox
-          ansible.builtin.include_tasks: proxmox/tainted_master.yml
+          ansible.builtin.include_tasks: proxmox/deployer_master.yml
           when: not use_vagrant
 
-        - name: Include task for Vagrant tainted master
+        - name: Include task for Vagrant deployer master
           tags:
             - vagrant
-          ansible.builtin.include_tasks: vagrant/tainted_master.yml
+          ansible.builtin.include_tasks: vagrant/deployer_master.yml
           when: use_vagrant
-      when: inventory_hostname in groups['servers'][0]
+      when: inventory_hostname in groups['deployer']
 
     - name: Delegate K3s API token
       tags:
         - k3s
         - token_delegation
-        - tainted_master
+        - deployer_master
       block:
         - name: Delegate K3s API token | Save file output to register
-          tags:
-            - with_shell
           ansible.builtin.shell: cat {{ k3s.path.node_token }} | tr -d " \t\n\r"
           register: reg_k3s_token
 
         - name: Delegate K3s API token | Delegate output to localhost
-          tags:
-            - with_module
           ansible.builtin.set_fact:
             k3s_token: "{{ reg_k3s_token.stdout }}"
           run_once: true
           delegate_to: localhost
           delegate_facts: true
-      when: inventory_hostname in groups['servers'][0]
+      when: inventory_hostname in groups['deployer']
 
-    - name: Install K3s | Run install script on master server
+    - name: Install K3s | Run install script on master servers
       tags:
         - k3s
-        - install
         - regular_master
-        - include_tasks
       block:
         - name: Include task for Proxmox regular master
           tags:
@@ -118,14 +140,12 @@
             - vagrant
           ansible.builtin.include_tasks: vagrant/regular_master.yml
           when: use_vagrant
-      when: inventory_hostname in groups['servers'][1]
+      when: inventory_hostname in groups['servers']
 
     - name: Install K3s | Run install script on agents
       tags:
         - k3s
-        - install
         - agents
-        - include_tasks
       block:
         - name: Include task for Proxmox agents
           tags:
@@ -145,7 +165,6 @@
     - name: ERROR | Install K3s | Notify about failure
       tags:
         - error_handling
-        - with_debug
       ansible.builtin.debug:
         msg: "K3s installation failed on node: {{ inventory_hostname }}. Check the logs for further information."
       notify: "remove_tmp"

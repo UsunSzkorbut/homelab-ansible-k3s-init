@@ -1,7 +1,7 @@
 ---
-- name: Included task for Vagrant tainted master
+- name: Included task for Vagrant deployer master
   block:
-    - name: Install K3s | Run install script on tainted master | Vagrant
+    - name: Install K3s | Run install script on deployer master | Vagrant
       tags:
         - k3s
         - install
@@ -10,10 +10,10 @@
       ansible.builtin.shell: >
         INSTALL_K3S_VERSION={{ k3s.version }}
         K3S_KUBECONFIG_MODE="644"
-        INSTALL_K3S_EXEC="--cluster-init
+        INSTALL_K3S_EXEC="
+        --cluster-init
         --disable servicelb
         --disable traefik
-        --node-taint node-role.kubernetes.io/master=true:NoSchedule
         --node-ip {{ hostvars[inventory_hostname].ansible_eth1.ipv4.address }}
         --flannel-iface eth1"
         {{ k3s.path.install }}
@@ -23,14 +23,14 @@
       notify: "remove_tmp"
 
   rescue:
-    - name: ERROR | Run install script on tainted master | Display error lines
+    - name: ERROR | Run install script on deployer master | Display error lines
       tags:
         - error_handling
         - with_debug
       ansible.builtin.debug:
         msg: "{{ reg_k3s_tainted_master.stderr_lines }}"
 
-    - name: ERROR | Run install script on tainted master | Attempt restarting service
+    - name: ERROR | Run install script on deployer master | Attempt restarting service
       tags:
         - error_handling
         - with_module
@@ -39,7 +39,7 @@
         state: restarted
       register: reg_k3s_tm_service_status
 
-    - name: ERROR | Run install script on tainted master | Uninstall remaining K3s files
+    - name: ERROR | Run install script on deployer master | Uninstall remaining K3s files
       tags:
         - error_handling
         - with_shell
@@ -49,7 +49,7 @@
       when: reg_k3s_tm_service_status.state != "started"
 
   always:
-    - name: Install K3s | Verify K3s installation on tainted master
+    - name: Install K3s | Verify K3s installation on deployer master
       tags:
         - verify
         - with_debug

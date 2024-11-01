@@ -4,8 +4,8 @@
 
 /terraform/terraform.tfstate*
 
-#ignore ansible ppk file
-/ansible/proxmox-k3s-vc
+#ignore ansible ppk file dir
+/ansible/ansible_ssh_private_key_dir/*
 
 #ignore vagrant configuration files
 .vagrant/
