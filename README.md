@@ -11,20 +11,15 @@ K3s cluster init with pre-installed components as:
 
 ## TODO:
 #### Kubernetes
-- [ ] Add 
+- [ ] Remove Host-Path SC
 #### Ansible
-- [ ] CRITICAL - Longhorn pre-req
-      sudo systemctl enable iscsid
-      sudo systemctl start iscsid
-      sudo systemctl stop multipathd
-      sudo systemctl disable multipathd
-- [ ] Update tags
-- [ ] Clean up path variables
-- [ ] Improve Nginx-Ingress and Rancher error handling
-- [ ] Add error handling for External-DNS
-- [ ] Rename registers and task names for deprecated tainted master
+- [X] Update tags
+- [X] Clean up path variables
+- [X] Improve Nginx-Ingress and Rancher error handling
+- [X] Add error handling for External-DNS
+- [X] Rename registers and task names for deprecated tainted master
 - [X] Update ansible variables - Rancher
-- [ ] Update roles README
+- [X] Update roles README
 #### Vagrant
 - [X] Update Vagrantfile
 
