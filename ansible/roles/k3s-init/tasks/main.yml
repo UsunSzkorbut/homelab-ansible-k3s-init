@@ -45,6 +45,20 @@
         name: iscsi_tcp
         state: present
 
+    - name: Prepare pre-requisites | Load ext4 module into kernel
+      tags:
+        - prereq
+      ansible.builtin.modprobe:
+        name: ext4
+        state: present
+
+#    - name: Prepare pre-requisites | Load nvme-tcp module into kernel
+#      tags:
+#        - prereq
+#      ansible.builtin.modprobe:
+#        name: nvme-tcp
+#        state: present
+
     - name: Prepare pre-requisites | Create temporary directory
       tags:
         - prereq
