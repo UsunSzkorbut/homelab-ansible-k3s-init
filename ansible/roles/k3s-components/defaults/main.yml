@@ -11,7 +11,7 @@ helm:
 ###############################################################
 ####################### K3S components ########################
 # Specify installation of longhorn
-install_longhorn: false
+install_longhorn: true
 
 # Specify installation of External-DNS for PiHole
 install_externaldns: false
@@ -26,7 +26,7 @@ install_rancher: false
 ####################### K3S components variables ##############
 # Metallb variables
 metallb:
-  namespace: metallb
+  namespace: metallb-system
   version: v0.14.8
   ippool: 10.0.0.150-10.0.0.199
   pool_name: first-pool
