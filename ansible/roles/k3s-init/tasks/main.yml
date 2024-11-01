@@ -4,8 +4,6 @@
     - name: Prepare pre-requisites | Install apt packages
       tags:
         - prereq
-        - apt
-        - with_module
       ansible.builtin.apt:
         name:
           - python3-pip
@@ -18,18 +16,38 @@
     - name: Prepare pre-requisites | Install Python3-REQ
       tags:
         - prereq
-        - pip
-        - with_module
       ansible.builtin.pip:
         name:
           - pyyaml
           - kubernetes
           - jsonpatch
 
+    - name: Prepare pre-requisites | Enabled and start iscsid
+      tags:
+        - prereq
+      ansible.builtin.systemd:
+        name: iscsid
+        enabled: true
+        state: started
+
+    - name: Prepare pre-requisites | Disable and stop multipathd
+      tags:
+        - prereq
+      ansible.builtin.systemd:
+        name: multipathd
+        enabled: false
+        state: stopped
+
+    - name: Prepare pre-requisites | Load iscsid_tcp module into kernel
+      tags:
+        - prereq
+      ansible.builtin.modprobe:
+        name: iscsi_tcp
+        state: present
+
     - name: Prepare pre-requisites | Create temporary directory
       tags:
         - prereq
-        - with_module
       ansible.builtin.file:
         path: "{{ tmp_dir }}"
         state: directory
@@ -39,7 +57,6 @@
     - name: ERROR | Prepare pre-requisites | Notify about failure
       tags:
         - error_handling
-        - with_debug
       ansible.builtin.debug:
         msg: "Prepare pre-requisites failed. Check the logs for further information."
       notify: "remove_tmp"
@@ -50,7 +67,6 @@
       tags:
         - k3s
         - download
-        - with_module
       ansible.builtin.get_url:
         url: https://get.k3s.io
         dest: "{{ k3s.path.install }}"
@@ -61,9 +77,7 @@
     - name: Install K3s | Run install script on deployer master
       tags:
         - k3s
-        - install
-        - deployer_master
-        - include_tasks
+        - deployer
       block:
         - name: Include task for Proxmox deployer master
           tags:
@@ -85,14 +99,10 @@
         - deployer_master
       block:
         - name: Delegate K3s API token | Save file output to register
-          tags:
-            - with_shell
           ansible.builtin.shell: cat {{ k3s.path.node_token }} | tr -d " \t\n\r"
           register: reg_k3s_token
 
         - name: Delegate K3s API token | Delegate output to localhost
-          tags:
-            - with_module
           ansible.builtin.set_fact:
             k3s_token: "{{ reg_k3s_token.stdout }}"
           run_once: true
@@ -103,9 +113,7 @@
     - name: Install K3s | Run install script on master servers
       tags:
         - k3s
-        - install
         - regular_master
-        - include_tasks
       block:
         - name: Include task for Proxmox regular master
           tags:
@@ -123,9 +131,7 @@
     - name: Install K3s | Run install script on agents
       tags:
         - k3s
-        - install
         - agents
-        - include_tasks
       block:
         - name: Include task for Proxmox agents
           tags:
@@ -145,7 +151,6 @@
     - name: ERROR | Install K3s | Notify about failure
       tags:
         - error_handling
-        - with_debug
       ansible.builtin.debug:
         msg: "K3s installation failed on node: {{ inventory_hostname }}. Check the logs for further information."
       notify: "remove_tmp"
