@@ -2,7 +2,7 @@ apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
   name: {{ metallb.pool_name }}
-  namespace: {{ cluster_ns.metallb }}
+  namespace: {{ metallb.namespace }}
 spec:
   addresses:
   - {{ metallb.ippool }}
