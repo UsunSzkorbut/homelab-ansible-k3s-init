@@ -1,6 +1,5 @@
 ---
 # handlers file for k3s-components
-
 - name: Remove temporary files
   ansible.builtin.file:
     path: "{{ tmp_dir }}"
