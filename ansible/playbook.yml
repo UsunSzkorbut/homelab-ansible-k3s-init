@@ -1,5 +1,5 @@
 ---
-- name: K3s Server and Agents Install
+- name: K3s Cluster Install
   hosts: all
   become: true
   tags: k3s-init
