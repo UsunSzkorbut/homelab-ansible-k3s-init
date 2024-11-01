@@ -240,7 +240,7 @@
       msg: "Configuring Cert-manager failed. Check the logs for further information."
     notify: "remove_tmp"
 
-- name: External-DNS for PiHole # TODO Add error handling for block
+- name: External-DNS for PiHole
   tags:
     - externaldns
   block:
@@ -302,11 +302,11 @@
             defaultDataLocality: best-effort
           csi:
             attacherReplicaCount: 1
-            provisionerReplicaCount: 2
-            resizerReplicaCount: 2
+            provisionerReplicaCount: 1
+            resizerReplicaCount: 1
             snapshotterReplicaCount: 1
           longhornUI:
-            replicas: 0
+            replicas: 1
 
     - name: Longhorn | Wait till the deployment is ready
       kubernetes.core.k8s_info:
