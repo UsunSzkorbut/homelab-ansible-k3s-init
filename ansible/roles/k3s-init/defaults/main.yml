@@ -1,6 +1,5 @@
 ---
 # defaults file for k3s-init
-
 # specify Vagrant usage
 use_vagrant: false
 
@@ -12,7 +11,14 @@ k3s:
   version: v1.30.4+k3s1
   path:
     bin: /usr/local/bin/k3s
+    conf_src: /etc/rancher/k3s/k3s.yaml
     install: "{{ tmp_dir }}/k3s_install.sh"
     node_token: /var/lib/rancher/k3s/server/node-token
     server_uninstall_bin: /usr/local/bin/k3s-uninstall.sh
     agents_uninstall_bin: /usr/local/bin/k3s-agent-uninstall.sh
+
+k3s_kube_conf:
+  kube_dir_path: /root/.kube/
+  kube_conf_src: /etc/rancher/k3s/k3s.yaml
+
+
