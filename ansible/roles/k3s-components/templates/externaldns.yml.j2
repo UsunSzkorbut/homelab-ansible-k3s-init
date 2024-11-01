@@ -40,7 +40,7 @@ metadata:
   name: external-dns
   namespace: {{ cluster_ns.externaldns }}
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
