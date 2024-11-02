@@ -11,6 +11,7 @@ K3s cluster init with pre-installed components as:
 
 ## TODO:
 #### Kubernetes
+- [ ] Add Longhorn Ingress
 - [ ] Remove Host-Path SC
 #### Ansible
 - [X] Update tags
