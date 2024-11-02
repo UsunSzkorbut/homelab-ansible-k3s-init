@@ -1,5 +1,6 @@
 ---
 # group_vars for proxmox
 ansible_user: cloud-user
-ansible_ssh_private_key_file: "{{ lookup('pipe', 'find ./ansible_ssh_private_key_dir -type f | head -n 1') }}"
+ansible_ssh_private_key_file: "{{ lookup('pipe', 'find ./ansible_ssh_private_key_dir -type f | sed -n ''2p''') }}"
+
 
