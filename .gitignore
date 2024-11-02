@@ -5,7 +5,7 @@
 /terraform/terraform.tfstate*
 
 #ignore ansible ppk file dir
-# /ansible/ansible_key_vault/
+/ansible/ansible_key_vault/
 
 #ignore vagrant configuration files
 .vagrant/
