@@ -1,4 +1,4 @@
-# homelab-ansible-k3s-cluster
+# terraform-ansible-k3s-cluster
 
 K3s cluster init with pre-installed components as:
  - **Metallb**
