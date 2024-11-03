@@ -325,6 +325,16 @@
           - op: replace
             path: /metadata/annotations/storageclass.kubernetes.io~1is-default-class
             value: "false"
+
+    - name: Longhorn | Create Ingress manifest for UI
+      ansible.builtin.template:
+        src: longhorn-ingress.yml.j2
+        dest: "{{ longhorn.ingress.manifest }}"
+
+    - name: Longhorn | Apply Ingress manifest for UI
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ longhorn.ingress.manifest }}"
   when: install_longhorn
             
   rescue:
