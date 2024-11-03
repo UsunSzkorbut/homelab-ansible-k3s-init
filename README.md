@@ -10,8 +10,10 @@ K3s cluster init with pre-installed components as:
  - **RancherOrchiestrator** / not being installed by default
 
 ## TODO:
-#### Vagrant
-- [ ] N/A
+#### Ansible
+- [ ] Update README
+- [ ] Clean and rename tags
+- [ ] Update Vagrant tasks
 
 ## Environment specification
 
