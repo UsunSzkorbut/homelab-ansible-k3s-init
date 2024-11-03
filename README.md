@@ -5,9 +5,9 @@ K3s cluster init with pre-installed components as:
  - **Helm support** / Available only on Deployer node
  - **Cert-Manager**
  - **Nginx Ingress Controller** / Traefik disabled
- - **External-DNS for PiHole** / Default Replicas 0 for deployment
+ - **External-DNS for PiHole** / Not being installed by default
  - **Longhorn** / Custom resources
- - **RancherOrchiestrator** / not being installed by default
+ - **RancherOrchiestrator** / Not being installed by default
 
 ## TODO:
 #### Ansible
