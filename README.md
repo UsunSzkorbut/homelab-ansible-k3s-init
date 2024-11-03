@@ -10,10 +10,6 @@ K3s cluster init with pre-installed components as:
  - **RancherOrchiestrator** / not being installed by default
 
 ## TODO:
-#### Kubernetes
-- [X] Add Longhorn Ingress
-#### Ansible
-- [ ] Add playbook for uninstalling k3s with artifacts
 #### Vagrant
 - [ ] N/A
 
