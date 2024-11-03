@@ -13,7 +13,7 @@ K3s cluster init with pre-installed components as:
 #### Kubernetes
 - [X] Add Longhorn Ingress
 #### Ansible
-- [ ] N/A
+- [ ] Add playbook for uninstalling k3s with artifacts
 #### Vagrant
 - [ ] N/A
 
