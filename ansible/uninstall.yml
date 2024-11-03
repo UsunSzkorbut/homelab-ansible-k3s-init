@@ -1,0 +1,51 @@
+---
+- name: K3s Cluster Uninstall with artifacts
+  hosts: all
+  become: true
+  tags: k3s-uninstall
+  vars:
+    k3s_bin: /usr/local/bin/k3s
+    k3s_killall: /usr/local/bin/k3s-killall.sh
+    k3s_agent_uninstall: /usr/local/bin/k3s-agent-uninstall.sh
+    k3s_master_uninstall: /usr/local/bin/k3s-uninstall.sh
+  tasks:
+    - name: K3s Masters Status | Check if k3s service is enabled on masters
+      ansible.builtin.systemd_service:
+        name: k3s
+        enabled: true
+      register: k3s_status
+      when: inventory_hostname in groups['deployer'] + groups['servers']
+
+    - name: K3s Masters nad Agents Status | Check if k3s binary executable is present
+      ansible.builtin.stat:
+        path: "{{ k3s_bin }}"
+      register: reg_k3s_bin_status
+
+    - name: K3s Uninstall
+      block:
+        - name: K3s Uninstall | Run killall.sh on all hosts
+          ansible.builtin.shell: "{{ k3s_killall }}"
+          when:
+            - reg_k3s_bin_status.stat.exists
+
+        - name: K3s Uninstall | Run uninstall.sh on agents
+          ansible.builtin.shell: "{{ k3s_agent_uninstall }}"
+          args:
+            removes: "{{ k3s_bin }}"
+          when:
+            - inventory_hostname in groups['agents']
+            - reg_k3s_bin_status.stat.exists
+
+        - name: K3s Uninstall | Run uninstall.sh on masters
+          ansible.builtin.shell: "{{ k3s_master_uninstall }}"
+          args:
+            removes: "{{ k3s_bin }}"
+          when:
+            - inventory_hostname in groups['deployer'] + groups['servers']
+            - reg_k3s_bin_status.stat.exists
+            - k3s_status.status.UnitFileState == "enabled"
+
+      rescue:
+        - name: ERROR | K3s Uninstall | Notify about failure
+          ansible.builtin.debug:
+            msg: "K3s uninstall failed. Check the logs for further information."

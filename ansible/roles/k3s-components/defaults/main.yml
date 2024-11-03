@@ -73,3 +73,6 @@ rancher:
 longhorn:
   namespace: longhorn-system
   version: 1.7.0
+  ingress:
+    manifest: "{{ tmp_dir }}/longhorn-ingress.yml"
+    hostname: longhorn.homelab.local

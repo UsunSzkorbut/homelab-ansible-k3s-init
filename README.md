@@ -11,18 +11,11 @@ K3s cluster init with pre-installed components as:
 
 ## TODO:
 #### Kubernetes
-- [ ] Add Longhorn Ingress
-- [ ] Remove Host-Path SC
+- [X] Add Longhorn Ingress
 #### Ansible
-- [X] Update tags
-- [X] Clean up path variables
-- [X] Improve Nginx-Ingress and Rancher error handling
-- [X] Add error handling for External-DNS
-- [X] Rename registers and task names for deprecated tainted master
-- [X] Update ansible variables - Rancher
-- [X] Update roles README
+- [ ] Add playbook for uninstalling k3s with artifacts
 #### Vagrant
-- [X] Update Vagrantfile
+- [ ] N/A
 
 ## Environment specification
 
