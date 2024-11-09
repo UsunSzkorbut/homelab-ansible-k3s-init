@@ -15,7 +15,7 @@
         {{ k3s.path.install }}
       args:
         creates: "{{ k3s.path.bin }}"
-      register: reg_k3s_tainted_master
+      register: reg_k3s_deployer_master
       notify: "remove_tmp"
 
   rescue:
@@ -23,7 +23,7 @@
       tags:
         - error_handling
       ansible.builtin.debug:
-        msg: "{{ reg_k3s_tainted_master.stderr_lines }}"
+        msg: "{{ reg_k3s_deployer_master.stderr_lines }}"
 
     - name: ERROR | Run install script on deployer master | Attempt restarting service
       tags:
@@ -31,7 +31,7 @@
       ansible.builtin.systemd_service:
         name: k3s
         state: restarted
-      register: reg_k3s_tm_service_status
+      register: reg_k3s_dm_service_status
 
     - name: ERROR | Run install script on deployer master | Uninstall remaining K3s files
       tags:
@@ -39,14 +39,14 @@
       ansible.builtin.shell: "{{ k3s.path.server_uninstall_bin }}"
       args:
         removes: "{{ k3s.path.bin }}"
-      when: reg_k3s_tm_service_status.state != "started"
+      when: reg_k3s_dm_service_status.state != "started"
 
   always:
     - name: Install K3s | Verify K3s installation on deployer master
       tags:
         - verify
       ansible.builtin.debug:
-        msg: "{{ reg_k3s_tainted_master.stdout_lines }}"
+        msg: "{{ reg_k3s_deployer_master.stdout_lines }}"
 
 - name: Prepare pre-requisites
   tags:
