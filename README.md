@@ -9,12 +9,6 @@ K3s cluster init with pre-installed components as:
  - **Longhorn** / Custom resources
  - **RancherOrchiestrator** / Not being installed by default
 
-## TODO:
-#### Ansible
-- [X] Update README
-- [X] Clean and rename tags
-- [X] Update Vagrant tasks
-
 ## Environment specification
 
 ✅ **Test Environment:** All components have been successfully tested on the cloud base image of **Ubuntu Server 22.04 LTS**, All tasks are performed on debian derivatives - repo update, apt install, etc.
