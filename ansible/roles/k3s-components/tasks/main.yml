@@ -135,7 +135,7 @@
   tags:
     - nginx
   block:
-    - name: Nginx Ingress Controller | Git clone branch # TODO fails here
+    - name: Nginx Ingress Controller | Git clone branch
       ansible.builtin.git:
         repo: https://github.com/nginxinc/kubernetes-ingress.git
         dest: "{{ nginxingresscontroller.path.install }}"
@@ -164,7 +164,7 @@
 
     - name: Nginx Ingress Controller | Download CustomResourceDefinitions manifest
       ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v3.7.0/deploy/crds.yaml
+        url: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/{{ nginxingresscontroller.version }}/deploy/crds.yaml
         dest: "{{ nginxingresscontroller.path.crds }}"
         mode: '0664'
 
