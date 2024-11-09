@@ -57,10 +57,10 @@ Or by running predefined script:
 cd homelab-ansible-k3s-init
 
 # Set permissions for executing
-chmod 755 ./scripts/set-privkey-perms.sh
+chmod 755 ./vagrant_key_script/set-privkey-perms.sh
 
 # Run the script (read-write permissions for root)
-./scripts/set-privkey-perms.sh
+./vagrant_key_script/set-privkey-perms.sh
 ```
 
 #### Ansible default Vagrant variables
