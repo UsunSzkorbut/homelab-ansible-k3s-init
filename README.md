@@ -9,12 +9,6 @@ K3s cluster init with pre-installed components as:
  - **Longhorn** / Custom resources
  - **RancherOrchiestrator** / Not being installed by default
 
-## TODO:
-#### Ansible
-- [ ] Update README
-- [ ] Clean and rename tags
-- [ ] Update Vagrant tasks
-
 ## Environment specification
 
 ✅ **Test Environment:** All components have been successfully tested on the cloud base image of **Ubuntu Server 22.04 LTS**, All tasks are performed on debian derivatives - repo update, apt install, etc.
@@ -80,22 +74,34 @@ terraform apply -auto-approve
 
 ### Run Ansible
 #### Proxmox hosts / Custom Provider
+To install simply run:
 ```bash
 cd ansible
-ansible-playbook -i inventories/proxmox playbook.yml
+ansible-playbook -i inventories/proxmox install.yml
+```
+To remove all K3s artifacts and services run:
+```bash
+cd ansible
+ansible-playbook -i inventories/proxmox uninstall.yml
 ```
 
 #### Vagrant hosts
 Requires specifying the usege of Vagrant by variable `use_vagrant`, which can be set inline:
 ```bash
 cd ansible
-ansible-playbook -i inventories/vagrant playbook.yml -e "use_vagrant=true"
+ansible-playbook -i inventories/vagrant install.yml -e "use_vagrant=true"
 ```
 Or explicitly in the default playbook or default variables of the [k3s-init role](./ansible/roles/k3s-init/README.md):
 ```bash
 cd ansible
-# use_vagrant: true in playbook.yml
-ansible-playbook -i inventories/vagrant playbook.yml
+# use_vagrant: true in install.yml
+ansible-playbook -i inventories/vagrant install.yml
+```
+
+Removing K3s artifacts and services:
+```bash
+cd ansible
+ansible-playbook -i inventories/vagrant uninstall.yml
 ```
 
 Depending on the operating system of the deploy server, there may be a problem with the public key for authentication to the selected node. Change permissions in the event of a `ssh key is too open` error.

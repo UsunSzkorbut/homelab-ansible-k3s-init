@@ -17,8 +17,9 @@ Default variables defined as follows:
 - `k3s` &mdash; set of nested variables for K3s installation such as:
     - `path` &mdash; including paths for installed binary, installation script, API token and uninstallation scripts.
     - `version` &mdash; release version of Kubernetes.
+- `k3s_kube_conf` &mdash; set of variables related to Kube config paths.
 
-❗ **NOTE:** Role requires at least one host defined in inventory groups, respectively: `server` and `agents`.
+❗ **NOTE:** Role requires at least one host defined in inventory groups, respectively: `deployer`, `servers` and `agents`.
 
 Dependencies
 ------------

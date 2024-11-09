@@ -4,9 +4,7 @@
     - name: Install K3s | Run install script on agents | Vagrant
       tags:
         - k3s
-        - install
         - agents
-        - with_shell
       ansible.builtin.shell: >
         INSTALL_K3S_VERSION={{ k3s.version }}
         INSTALL_K3S_EXEC="agent
@@ -24,14 +22,12 @@
     - name: ERROR | Run install script on agents | Display error lines
       tags:
         - error_handling
-        - with_debug
       ansible.builtin.debug:
         msg: "{{ reg_k3s_agent.stderr_lines }}"
 
     - name: ERROR | Run install script on agents | Attempt restarting service
       tags:
         - error_handling
-        - with_module
       ansible.builtin.systemd_service:
         name: k3s
         state: restarted
@@ -40,7 +36,6 @@
     - name: ERROR | Run install script on agents | Uninstall remaining K3s files
       tags:
         - error_handling
-        - with_shell
       ansible.builtin.shell: "{{ k3s.path.agents_uninstall_bin }}"
       args:
         removes: "{{ k3s.path.bin }}"
@@ -50,6 +45,5 @@
     - name: Install K3s | Verify K3s installation on agent
       tags:
         - verify
-        - with_debug
       ansible.builtin.debug:
         msg: "{{ reg_k3s_agent.stdout_lines }}"

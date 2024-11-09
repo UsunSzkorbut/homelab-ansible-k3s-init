@@ -2,11 +2,12 @@ k3s-components
 =========
 
 An Ansible Role that installs and initializes components:
-- Metallb
 - Helm
+- Metallb
 - Cert-Manager
 - Nginx-Ingress Controller
-- RancherOrchiestrator
+- ExternalDNS
+- Rancher
 - Longhorn
 
 Requirements
@@ -19,13 +20,14 @@ Role Variables
 
 Default variables defined as follows:
 - `tmp_dir` &mdash; temporary directory path for installation scripts.
-- `kube_dir_path` &mdash; path to K3s configuration directory.
-- `cluster_ns` &mdash; set of variables for cluster namespaces.
-- `k3s.path.conf_src` &mdash; path to `k3s.yaml` file.
-- `metallb` &mdash; set of nested variables for Metallb (e.g. `version`).
-- `helm.path.bin` &mdash; path to installed Helm binary.
+- `helm` &mdash; set of nested variables for Helm (e.g. path to installation script).
+- `install_longhorn` &mdash; variable specifying installation of Longhorn (*true* by default).
+- `install_externaldns` &mdash; variable specifying installation of ExternalDNS (*false* by default).
+- `install_rancher` &mdash; variable specifying installation of Rancher (*false* by default).
+- `metallb` &mdash; set of nested variables for Metallb (e.g. `namespace`).
 - `cert_manager` &mdash; set of nested variables for Cert-Manager.
-- `nginx_ingress_controller` &mdash; set of nested variables for Nginx-Ingress controller.
+- `nginxingresscontroller` &mdash; set of nested variables for Nginx-Ingress controller.
+- `externaldns` &mdash; set of nested variables for ExternalDNS.
 - `rancher` &mdash; set of nested variables for Rancher.
 - `longhorn` &mdash; set of nested variables for Longhorn.
 
