@@ -20,5 +20,3 @@ k3s:
 k3s_kube_conf:
   kube_dir_path: /root/.kube/
   kube_conf_src: /etc/rancher/k3s/k3s.yaml
-
-
