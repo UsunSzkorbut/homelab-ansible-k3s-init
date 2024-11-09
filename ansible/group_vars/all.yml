@@ -1,5 +1,16 @@
 ---
-# group_vars for ansible playbooks
+# group_vars for ansible playbooks and inventories
+
+# variables for inventories
 vagrant_dir: ../vagrant/.vagrant
 vagrant_provider: vmware_desktop
+
+# variables for install.yml playbook
 use_vagrant: false
+
+# variables for uninstall.yml playbook
+k3s_play:
+  bin: /usr/local/bin/k3s
+  killall: /usr/local/bin/k3s-killall.sh
+  agent_uninstall: /usr/local/bin/k3s-agent-uninstall.sh
+  master_uninstall: /usr/local/bin/k3s-uninstall.sh
